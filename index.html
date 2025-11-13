@@ -536,7 +536,17 @@
                 <!-- BARU: CONTAINER UNTUK TABEL JADWAL MASTER -->
                 <!-- PERBAIKAN: Direstrukturisasi untuk memisahkan Search Bar dari Konten Tabel -->
                 <div id="scheduleMasterSection" class="mt-10 pt-4 border-t border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-3">Data Master Jadwal Mesin Tersimpan</h2>
+                    <!-- BARU: Flex container for title and button -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold text-gray-800">Data Master Jadwal Mesin Tersimpan</h2>
+                        <!-- BARU: Tombol Export Excel untuk Master Jadwal -->
+                        <button id="exportMasterScheduleButton" onclick="exportMasterScheduleToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
+                            <svg xmlns="http://www.w.g.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export Excel
+                        </button>
+                    </div>
 
                     <!-- Filter Pencarian untuk Tabel Jadwal (PINDAH KE SINI) -->
                     <div class="mb-4 relative">
@@ -702,18 +712,8 @@
         </div>
     </div>
     
-    <!-- BARU: Modal (Popup) Konfirmasi Jadwal Hari Libur -->
-    <div id="weekendConfirmModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
-            <h3 class="text-xl font-bold mb-4 text-orange-600">Konfirmasi Hari Libur</h3>
-            <p class="text-gray-600 mb-4" id="weekendConfirmMessage">Tanggal yang dipilih adalah hari libur. Yakin ingin melanjutkan?</p>
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="toggleWeekendConfirmModal(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
-                <!-- PERUBAHAN: Akan memanggil confirmWeekendSave() atau confirmWeekendSave_Modal() -->
-                <button type="button" id="confirmWeekendButton" onclick="confirmWeekendSave()" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition duration-150">Lanjutkan</button>
-            </div>
-        </div>
-    </div>
+    <!-- DIHAPUS: Modal (Popup) Konfirmasi Jadwal Hari Libur -->
+    <!-- <div id="weekendConfirmModal" class="hidden fixed inset-0 z-50 ..."> ... </div> -->
 
 
     <script>
@@ -789,6 +789,26 @@
             const minutes = Math.round(decimalPart * 60);
 
             return `${hours} Jam ${minutes} Menit`;
+        }
+
+        // BARU: Fungsi helper untuk mencari hari kerja berikutnya (termasuk hari ini)
+        // Mengembalikan Objek Date yang sudah divalidasi
+        function getNextWorkday(date) {
+            let currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            // Loop: Jika hari ini Minggu (0) or Sabtu (6)
+            while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
+                currentDate.setDate(currentDate.getDate() + 1); // Lanjut ke hari berikutnya
+            }
+            return currentDate;
+        }
+
+        // BARU: Fungsi untuk mengubah Objek Date ke string YYYY-MM-DD (Aman Timezone Lokal)
+        function formatDateToYMD(date) {
+             if (!(date instanceof Date) || isNaN(date)) return '';
+             const y = date.getFullYear();
+             const m = (date.getMonth() + 1).toString().padStart(2, '0');
+             const d = date.getDate().toString().padStart(2, '0');
+             return `${y}-${m}-${d}`;
         }
 
         // **FUNGSI BARU**: Mengatur Tampilan (View)
@@ -970,7 +990,27 @@
                  return;
             }
 
-            const dbDate = parsedDate.toISOString().split('T')[0];
+            // --- PERBAIKAN LOGIKA: Otomatis loncat ke hari kerja (Senin-Jumat) ---
+            // 1. Dapatkan tanggal hari kerja
+            const workdayDate = getNextWorkday(parsedDate);
+            let finalDateStr = dateStr;
+            
+            // 2. Cek apakah tanggalnya berubah (artinya kita loncat)
+            if (workdayDate.getDate() !== parsedDate.getDate()) {
+                finalDateStr = formatDateToDMY(workdayDate); // Format baru DD/MM/YYYY
+                document.getElementById('inputScheduleDate').value = finalDateStr; // Update UI
+                
+                // Tunda pesan notifikasi sedikit agar tidak tertimpa pesan lain
+                setTimeout(() => {
+                    showMessage(`Tanggal ${dateStr} adalah hari libur. Otomatis dipindahkan ke ${finalDateStr}.`, "info");
+                }, 100);
+            }
+            
+            // 3. Gunakan workdayDate untuk database
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            const dbDate = formatDateToYMD(workdayDate);
+            // --- AKHIR PERBAIKAN ---
+
 
             // Pengecekan Ketersediaan Slot
             const productDataForCheck = Object.values(productionData).find(p => p.code === code);
@@ -987,20 +1027,27 @@
                  return;
             }
 
-            // Cek jika hari libur dan belum di-force
+            // Cek jika slot akhir PENUH
+            // PERUBAHAN: Pengecekan currentId dihapus, karena ini HANYA insert.
+            if (finalScheduleItem) {
+                 showMessage(`SLOT PENUH (Mesin ${finalMachineToSave}). Gagal menyimpan.`, "error");
+                 return;
+            }
+
+            // DIHAPUS: Pengecekan hari libur dan modal konfirmasi
+            /*
             const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
             if (isWeekend && !forceWeekend) {
-                const dayName = parsedDate.toLocaleDateString('id-ID', { weekday: 'long' });
-                document.getElementById('weekendConfirmMessage').textContent = `Tanggal ${dateStr} adalah ${dayName} (hari libur). Anda yakin ingin melanjutkan penjadwalan?`;
-                // PERUBAHAN: Pastikan tombol konfirmasi memanggil fungsi yang benar
-                document.getElementById('confirmWeekendButton').onclick = confirmWeekendSave;
+                ...
                 toggleWeekendConfirmModal(true);
                 return; 
             }
+            */
 
 
             const dataToSave = {
                 mesin: finalMachineToSave, 
+                // PERBAIKAN TIMEZONE: Menggunakan dbDate yang sudah diformat YMD
                 schedule_date: dbDate, 
                 schedule_shift: shift,
                 product_code: code,
@@ -1021,11 +1068,19 @@
 
                 cancelScheduleEdit(); // Reset form dan tombol
 
+                // --- PERBAIKAN SINKRONISASI ---
                 const start = document.getElementById('startDate').value;
                 const end = document.getElementById('endDate').value;
+                
+                // 1. Ambil data master terbaru
+                await fetchAllScheduleData(); 
+                // 2. Render ulang tabel master (jika pengguna pindah tab)
+                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
+                // 3. Render ulang tabel perencanaan saat ini
                 if (start && end) {
                     renderPlanningTable(start, end);
                 }
+                // --- AKHIR PERBAIKAN ---
 
             } catch (e) {
                 console.error("Error saving schedule slot:", e);
@@ -1064,7 +1119,26 @@
                  return;
             }
 
-            const dbDate = parsedDate.toISOString().split('T')[0];
+            // --- PERBAIKAN LOGIKA: Otomatis loncat ke hari kerja (Senin-Jumat) ---
+            // 1. Dapatkan tanggal hari kerja
+            const workdayDate = getNextWorkday(parsedDate);
+            let finalDateStr = dateStr;
+            
+            // 2. Cek apakah tanggalnya berubah (artinya kita loncat)
+            if (workdayDate.getDate() !== parsedDate.getDate()) {
+                finalDateStr = formatDateToDMY(workdayDate); // Format baru DD/MM/YYYY
+                document.getElementById('modalScheduleDate').value = finalDateStr; // Update UI modal
+                
+                // Tunda pesan notifikasi sedikit agar tidak tertimpa pesan lain
+                setTimeout(() => {
+                    showMessage(`Tanggal ${dateStr} adalah hari libur. Otomatis dipindahkan ke ${finalDateStr}.`, "info");
+                }, 100);
+            }
+            
+            // 3. Gunakan workdayDate untuk database
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            const dbDate = formatDateToYMD(workdayDate);
+            // --- AKHIR PERBAIKAN ---
 
             // Pengecekan Ketersediaan Slot (menggunakan fungsi modal)
             const productDataForCheck = Object.values(productionData).find(p => p.code === code);
@@ -1081,18 +1155,19 @@
             }
 
             // Cek jika hari libur dan belum di-force
+            // DIHAPUS: Pengecekan hari libur dan modal konfirmasi
+            /*
             const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
             if (isWeekend && !forceWeekend) {
-                const dayName = parsedDate.toLocaleDateString('id-ID', { weekday: 'long' });
-                document.getElementById('weekendConfirmMessage').textContent = `Tanggal ${dateStr} adalah ${dayName} (hari libur). Anda yakin ingin melanjutkan pembaruan?`;
-                // PERUBAHAN: Panggil fungsi konfirmasi modal
-                document.getElementById('confirmWeekendButton').onclick = confirmWeekendSave_Modal;
+                ...
                 toggleWeekendConfirmModal(true);
                 return; 
             }
+            */
 
             const dataToSave = {
                 mesin: finalMachineToSave, 
+                // PERBAIKAN TIMEZONE: Menggunakan dbDate yang sudah diformat YMD
                 schedule_date: dbDate, 
                 schedule_shift: shift,
                 product_code: code,
@@ -1114,11 +1189,19 @@
 
                 toggleScheduleEditModal(false); // Tutup modal
 
+                // --- PERBAIKAN SINKRONISASI ---
                 const start = document.getElementById('startDate').value;
                 const end = document.getElementById('endDate').value;
+
+                // 1. Ambil data master terbaru
+                await fetchAllScheduleData();
+                // 2. Render ulang tabel master (jika pengguna pindah tab)
+                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
+                // 3. Render ulang tabel perencanaan saat ini
                 if (start && end) {
                     renderPlanningTable(start, end);
                 }
+                // --- AKHIR PERBAIKAN ---
 
             } catch (e) {
                 console.error("Error updating schedule slot:", e);
@@ -1160,12 +1243,20 @@
 
                     showMessage("Slot jadwal berhasil dihapus!", "info");
 
-                    // Refresh tabel
+                    // --- PERBAIKAN SINKRONISASI (Mengganti logika lama) ---
                     const start = document.getElementById('startDate').value;
                     const end = document.getElementById('endDate').value;
+
+                    // 1. Ambil data master terbaru
+                    await fetchAllScheduleData();
+                    // 2. Render ulang tabel master (penting jika dihapus dari tab master)
+                    renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
+                    // 3. Render ulang tabel perencanaan saat ini (penting jika dihapus dari tab perencanaan)
                     if (start && end) {
                         renderPlanningTable(start, end);
                     }
+                    // --- AKHIR PERBAIKAN ---
+
                 } catch (e) {
                     console.error("Error deleting schedule slot:", e);
                     showMessage("Gagal menghapus slot jadwal. Cek koneksi atau izin RLS.", "error");
@@ -1173,6 +1264,8 @@
             }
         }
 
+        // DIHAPUS: Fungsi konfirmasi hari libur tidak diperlukan lagi
+        /*
         // BARU: Konfirmasi untuk menyimpan di hari libur (dari form ATAS)
         window.confirmWeekendSave = function() {
             toggleWeekendConfirmModal(false); 
@@ -1184,16 +1277,20 @@
             toggleWeekendConfirmModal(false); 
             updateScheduleSlotFromModal(true); // Panggil update
         }
+        */
 
         // Toggle Modal Delete Jadwal
         window.toggleScheduleDeleteModal = function(show) {
             document.getElementById('scheduleDeleteModal').classList.toggle('hidden', !show);
         }
 
+        // DIHAPUS: Toggle modal hari libur
+        /*
         // BARU: Toggle Modal Konfirmasi Hari Libur
         window.toggleWeekendConfirmModal = function(show) {
             document.getElementById('weekendConfirmModal').classList.toggle('hidden', !show);
         }
+        */
         
         // BARU: Toggle Modal Edit Jadwal
         window.toggleScheduleEditModal = function(show) {
@@ -1365,7 +1462,8 @@
                  messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
                  return;
             }
-            const dbDate = parsedDate.toISOString().split('T')[0];
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            const dbDate = formatDateToYMD(parsedDate);
 
             if (!productData) {
                  productData = Object.values(productionData).find(p => p.code === code);
@@ -1556,7 +1654,8 @@
                  messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
                  return;
             }
-            const dbDate = parsedDate.toISOString().split('T')[0];
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            const dbDate = formatDateToYMD(parsedDate);
 
             if (!productData) {
                  // Cari produk berdasarkan KODE dan NAMA (karena dropdown mungkin sudah dipilih)
@@ -1744,10 +1843,11 @@
                     weekday: dayFormatter.format(date),
                     isWeekend: isWeekend,
                     // Format YYYY-MM-DD untuk pencarian database
-                    dbDate: date.toISOString().split('T')[0]
-                });
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            dbDate: formatDateToYMD(date)
+        });
 
-                // Lanjut ke hari berikutnya
+        // Lanjut ke hari berikutnya
                 currentDate.setDate(currentDate.getDate() + 1);
             }
             return dates;
@@ -1900,6 +2000,11 @@
             // --- PERUBAHAN: Modifikasi untuk tampilan per minggu ---
             if (errorCount === 0 && startDateStr && endDateDisplay) {
                 
+                // --- PERBAIKAN SINKRONISASI ---
+                // 1. Ambil data master terbaru SEBELUM pindah tab
+                await fetchAllScheduleData(); 
+                // --- AKHIR PERBAIKAN ---
+
                 // 1. Dapatkan tanggal mulai (sudah ada)
                 //    startDateStr -> "01/10/2025"
 
@@ -1988,7 +2093,8 @@
                     for (let i = 0; i < 60; i++) { 
                         const isWeekend = tempDate.getDay() === 0 || tempDate.getDay() === 6;
                         if (!isWeekend) {
-                            const dbDate = tempDate.toISOString().split('T')[0];
+                            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+                            const dbDate = formatDateToYMD(tempDate);
                             for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
                                 const shiftName = `Shift ${s}`;
                                 const key = `${machineToFind}|${dbDate}|${shiftName}`;
@@ -2041,7 +2147,8 @@
                             continue; 
                         }
 
-                        const dbDate = currentWorkingDate.toISOString().split('T')[0];
+                        // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+                        const dbDate = formatDateToYMD(currentWorkingDate);
 
                         // Loop 3 shift
                         for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
@@ -2057,6 +2164,7 @@
                                 proposedSlots.push({
                                     machine: chosenMachine, // <-- SELALU 'chosenMachine'
                                     shift: shiftName,
+                                    // PERBAIKAN TIMEZONE: Menggunakan dbDate yang sudah diformat YMD
                                     dbDate: dbDate,
                                     productCode: component.productCode,
                                     productName: component.productName,
@@ -2414,6 +2522,73 @@
         }
 
 
+        // BARU: Fungsi untuk Ekspor Tabel Master Jadwal ke Excel
+        window.exportMasterScheduleToExcel = function() {
+            if (typeof XLSX === 'undefined') {
+                showMessage("Library Excel (xlsx.js) belum dimuat. Coba refresh halaman.", "error");
+                return;
+            }
+
+            // 1. Dapatkan data yang sedang difilter
+            const searchQuery = document.getElementById('scheduleMasterSearchInput').value;
+            const filteredData = masterScheduleData.filter(data => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                    (data.mesin && data.mesin.toLowerCase().includes(query)) ||
+                    (data.product_code && data.product_code.toLowerCase().includes(query)) ||
+                    (data.product_name && data.product_name.toLowerCase().includes(query))
+                );
+            });
+
+            if (filteredData.length === 0) {
+                showMessage("Tidak ada data untuk diekspor (mungkin tabel kosong or filter tidak menemukan hasil).", "error");
+                return;
+            }
+
+            showMessage("Mempersiapkan data Excel...", "info");
+
+            // 2. Format data untuk sheet Excel (JSON to Sheet)
+            const dataForExcel = filteredData.map(data => {
+                // Konversi tanggal DB (YYYY-MM-DD) ke tampilan DD/MM/YYYY
+                const dateParts = data.schedule_date.split('-');
+                const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+                
+                return {
+                    "MESIN UTAMA": data.mesin,
+                    "KODE PRODUK": data.product_code,
+                    "NAMA KOMPONEN": data.product_name || 'N/A',
+                    "SHIFT": data.schedule_shift.split(' ')[1], // Hanya angka '1', '2', atau '3'
+                    "TANGGAL JADWAL": displayDate
+                };
+            });
+
+            // 3. Buat Workbook dan Worksheet
+            try {
+                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Master Jadwal");
+
+                // (Opsional) Atur lebar kolom agar lebih rapi
+                ws['!cols'] = [
+                    { wch: 15 }, // MESIN UTAMA
+                    { wch: 15 }, // KODE PRODUK
+                    { wch: 30 }, // NAMA KOMPONEN
+                    { wch: 10 }, // SHIFT
+                    { wch: 18 }  // TANGGAL JADWAL
+                ];
+
+                // 4. Tulis file dan picu download
+                const fileName = `Master_Jadwal_Mesin_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
+            } catch (e) {
+                console.error("Gagal mengekspor Master Jadwal Excel:", e);
+                showMessage("Terjadi kesalahan saat membuat file Excel.", "error");
+            }
+        }
+
+
         // **FUNGSI UTAMA** Merender Tabel Perencanaan Jadwal
         window.renderPlanningTable = async function(startDateStr, endDateStr) {
             const container = document.getElementById('planningActualTable');
@@ -2618,9 +2793,18 @@
 
                                 // Konten Slot (LOGIKA DIPERBARUI)
                                 // PRIORITAS 1: Cek apakah ada jadwal
+                                // PERBAIKAN LOGIKA: Logika if/else diubah total untuk Prioritas
                                 if (scheduledCode) {
-                                    textClass = 'font-bold text-indigo-700'; // Tetapkan textClass di sini
+                                    // --- INI ADALAH LOGIKA BARU ---
+                                    // ADA JADWAL. Tampilkan.
+                                    textClass = 'font-bold text-indigo-700'; 
                                     const productName = scheduleItem.product_name || 'Nama?';
+                                    
+                                    // Jika ada jadwal TAPI di hari libur, override textClass
+                                    if (d.isWeekend) {
+                                        textClass = 'font-bold text-red-800'; // Teks merah tebal di atas bg merah
+                                    }
+                                    // --- AKHIR LOGIKA BARU ---
 
                                     // Slot Terisi (dengan tombol Hapus/Edit jika Admin Login)
                                     slotContent = `
@@ -2662,7 +2846,7 @@
                                     slotContent = 'LIBUR';
                                     textClass = 'text-red-700'; // Disesuaikan untuk slot libur
                                 }
-                                // PRIORITAS 3: Slot kosong
+                                // PRIORITAS 3: Slot kosong (Bukan hari libur & tidak ada jadwal)
                                 else {
                                     slotContent = 'Slot Kosong';
                                     textClass = 'text-gray-400';
@@ -2670,7 +2854,8 @@
 
                                 // Hanya satu kolom slot per Tanggal
                                 return `
-                                    <td class="py-1 px-1 text-center border-r ${classWeekend} ${textClass} h-12" style="min-width: 100px;">
+                                    <!-- PERBAIKAN: Tinggi sel diubah dari h-12 menjadi h-16 agar seragam -->
+                                    <td class="py-1 px-1 text-center border-r ${classWeekend} ${textClass} h-16" style="min-width: 100px;">
                                         ${slotContent}
                                     </td>
                                 `;
@@ -2735,8 +2920,9 @@
             }
 
             // Konversi ke format YYYY-MM-DD
-            const startDb = startDateParsed.toISOString().split('T')[0];
-            const endDb = endDateParsed.toISOString().split('T')[0];
+            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
+            const startDb = formatDateToYMD(startDateParsed);
+            const endDb = formatDateToYMD(endDateParsed);
 
             try {
                 const { data, error } = await supabase
@@ -3050,10 +3236,19 @@
                 selectedScheduleIds.clear(); // Kosongkan set
                 updateDeleteSelectedButtonState(); // Sembunyikan tombol
                 
-                // Refresh data dan render ulang tabel
-                 fetchAllScheduleData().then(() => {
-                     renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
-                 });
+                // --- PERBAIKAN SINKRONISASI (Lanjutan) ---
+                // 1. Ambil data master terbaru (untuk tab Master)
+                await fetchAllScheduleData(); 
+                // 2. Render ulang tabel master
+                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
+
+                // 3. Render ulang tabel perencanaan
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                if (start && end) {
+                    renderPlanningTable(start, end);
+                }
+                // --- AKHIR PERBAIKAN ---
 
             } catch (e) {
                 console.error("Error deleting multiple schedule slots:", e);
