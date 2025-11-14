@@ -3050,6 +3050,8 @@
                                 </th>` : ''}
                                 <th class="py-3 px-4 border-b">Mesin Utama</th>
                                 <th class="py-3 px-4 border-b">Kode Produk</th>
+                                <!-- BARU: Kolom Nama Komponen -->
+                                <th class="py-3 px-4 border-b">Nama Komponen</th>
                                 <th class="py-3 px-4 border-b text-center">Shift</th>
                                 <th class="py-3 px-4 border-b text-center">Tanggal Jadwal</th>
                                 ${isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : ''}
@@ -3119,9 +3121,11 @@
                         <td class="py-3 px-4 text-gray-800 font-bold">${data.mesin}</td>
                         <td class="py-3 px-4 text-gray-700 font-mono">
                             ${data.product_code}
-                            <!-- PERBAIKAN: Tampilan Nama Produk (inline, dengan tanda kurung) -->
-                            <span class="text-xs text-gray-500 ml-2">(${productName})</span>
+                            <!-- DIHAPUS: Nama produk dipindah ke kolom baru -->
+                            <!-- <span class="text-xs text-gray-500 ml-2">(${productName})</span> -->
                         </td>
+                        <!-- BARU: Kolom Nama Komponen -->
+                        <td class="py-3 px-4 text-gray-700 text-sm">${productName}</td>
                         <td class="py-3 px-4 text-gray-700 text-center">${data.schedule_shift.split(' ')[1]}</td>
                         <td class="py-3 px-4 text-gray-700 text-center">${displayDate}</td>
                         ${actionButtons}
