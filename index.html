@@ -311,6 +311,26 @@
                     <!-- ===================================================================== -->
                     <div id="autoSchedulePanel" class="mt-8 p-6 bg-green-50 rounded-xl border border-green-200 hidden">
                         <h3 class="text-lg font-bold text-green-800 mb-4">Penjadwalan Otomatis Berdasarkan Estimasi</h3>
+                        
+                        <!-- ====================================================== -->
+                        <!-- BARU: Container Pilihan Komponen (Implementasi Fitur) -->
+                        <!-- ====================================================== -->
+                        <div id="componentSelectionContainer" class="mt-4 mb-4 p-4 border border-green-200 rounded-lg bg-white hidden">
+                            <h4 class="text-base font-semibold text-gray-700 mb-3">Pilih Komponen untuk Dijadwalkan:</h4>
+                            <!-- Checkbox "Pilih Semua" -->
+                            <div class="mb-2 border-b pb-2">
+                                <input type="checkbox" id="selectAllComponents" onchange="toggleSelectAll(this)" class="rounded border-gray-400 focus:ring-indigo-500">
+                                <label for="selectAllComponents" class="ml-2 text-sm font-medium text-gray-800">Pilih Semua Komponen</label>
+                            </div>
+                            <!-- Daftar Checkbox Komponen (diisi oleh JS) -->
+                            <div id="componentSelectionList" class="max-h-40 overflow-y-auto space-y-2 pt-2">
+                                <!-- Checkbox list will be injected here by JS -->
+                            </div>
+                        </div>
+                        <!-- ====================================================== -->
+                        <!-- AKHIR BARU -->
+                        <!-- ====================================================== -->
+
                         <!-- BARU: Menambahkan ID 'autoScheduleFormGrid' untuk menyembunyikan form saat cetak PDF -->
                         <div id="autoScheduleFormGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                             <div class="sm:col-span-2">
@@ -541,7 +561,7 @@
                         <h2 class="text-xl font-semibold text-gray-800">Data Master Jadwal Mesin Tersimpan</h2>
                         <!-- BARU: Tombol Export Excel untuk Master Jadwal -->
                         <button id="exportMasterScheduleButton" onclick="exportMasterScheduleToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
-                            <svg xmlns="http://www.w.g.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Export Excel
@@ -1875,6 +1895,60 @@
 
         // --- LOGIKA UTAMA AUTO-SCHEDULE (Fasa 2) ---
 
+        // =====================================================================
+        // BARU: Fungsi untuk merender daftar checkbox komponen
+        // =====================================================================
+        function renderComponentSelectionList(components) {
+            const listContainer = document.getElementById('componentSelectionList');
+            const selectionContainer = document.getElementById('componentSelectionContainer');
+            const selectAllCheckbox = document.getElementById('selectAllComponents');
+
+            listContainer.innerHTML = ''; // Kosongkan daftar lama
+
+            if (!components || components.length === 0) {
+                selectionContainer.classList.add('hidden'); // Sembunyikan jika tidak ada komponen
+                return;
+            }
+
+            // Tampilkan jika ada komponen
+            selectionContainer.classList.remove('hidden');
+            
+            // Format angka
+            const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            components.forEach((component, index) => {
+                const shiftNet = component.shiftNet;
+                const shiftsRounded = Math.ceil(shiftNet);
+
+                // Buat HTML untuk checkbox
+                // PENTING: value="${index}" digunakan untuk melacak komponen di array pendingScheduleComponents
+                const html = `
+                    <div class="flex items-center p-2 rounded-md hover:bg-gray-50">
+                        <input type="checkbox" id="component-check-${index}" value="${index}" class="component-checkbox rounded border-gray-400 focus:ring-indigo-500" checked>
+                        <label for="component-check-${index}" class="ml-3 text-sm text-gray-700">
+                            <span class="font-bold">${component.productName}</span> (${component.machine})
+                            <span class="block text-xs text-gray-500">${decimalFormatter.format(shiftNet)} Shift (Dibulatkan: ${shiftsRounded} Shift)</span>
+                        </label>
+                    </div>
+                `;
+                listContainer.innerHTML += html;
+            });
+
+            // Pastikan "Pilih Semua" dicentang secara default
+            selectAllCheckbox.checked = true;
+        }
+
+        // =====================================================================
+        // BARU: Fungsi untuk toggle "Pilih Semua"
+        // =====================================================================
+        window.toggleSelectAll = function(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.component-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+        }
+
+
         // Fungsi baru untuk mengeksekusi Auto-Schedule
         // PERUBAHAN: Nama fungsi diubah menjadi handleAutoScheduleClick
         window.handleAutoScheduleClick = async function() {
@@ -1892,15 +1966,30 @@
             // --- LOGIKA BARU: Cek Admin atau Non-Admin ---
             if (isLoggedIn) {
                 // ALUR ADMIN (Menjalankan Simulasi)
-                if (pendingScheduleComponents.length === 0) {
-                    showMessage("Tidak ada data estimasi yang siap dijadwalkan. Harap Hitung Estimasi terlebih dahulu.", "error");
+                
+                // ==================================================================
+                // BARU: Dapatkan komponen yang dipilih (IMPLEMENTASI FITUR)
+                // ==================================================================
+                const selectedCheckboxes = document.querySelectorAll('.component-checkbox:checked');
+                // Ambil komponen dari array 'pendingScheduleComponents' berdasarkan 'value' (indeks)
+                const selectedComponents = Array.from(selectedCheckboxes).map(cb => {
+                    return pendingScheduleComponents[parseInt(cb.value)];
+                });
+
+                // Ganti 'pendingScheduleComponents.length' dengan 'selectedComponents.length'
+                if (selectedComponents.length === 0) {
+                    // PERUBAHAN: Pesan error
+                    showMessage("Tidak ada komponen yang dipilih untuk dijadwalkan. Harap pilih minimal satu komponen.", "error");
                     return;
                 }
+                // ==================================================================
+                // AKHIR PERUBAHAN
+                // ==================================================================
 
-                showMessage("Memulai simulasi penjadwalan otomatis...", "info");
+                showMessage(`Memulai simulasi penjadwalan otomatis untuk ${selectedComponents.length} komponen...`, "info");
 
-                // PERUBAHAN: Menggunakan fungsi autoScheduleProduction_Simple (DISEDERHANAKAN)
-                const results = await autoScheduleProduction_Simple(startDate, pendingScheduleComponents);
+                // PERUBAHAN: Menggunakan 'selectedComponents' yang sudah difilter
+                const results = await autoScheduleProduction_Simple(startDate, selectedComponents);
 
                 // Tampilkan hasil simulasi atau error
                 if (results.error) {
@@ -1912,7 +2001,8 @@
                     statusMessage.innerHTML = `
                         Simulasi Berhasil!
                         <ul class="list-disc list-inside">
-                            <li>Komponen Terjadwal: ${results.scheduledCount} dari ${results.totalComponents}</li>
+                            <!-- PERUBAHAN: Gunakan 'selectedComponents.length' sebagai total -->
+                            <li>Komponen Terjadwal: ${results.scheduledCount} dari ${selectedComponents.length}</li>
                             <li>Tanggal Mulai: ${startDateStr}</li>
                             <li>Tanggal Selesai (Simulasi): ${results.endDateDisplay}</li>
                             <li>Total Slot yang Diusulkan: ${results.proposedSlots.length}</li>
@@ -2035,6 +2125,7 @@
 
 
         // **FUNGSI UTAMA** LOGIKA PENJADWALAN OTOMATIS (DISEDERHANAKAN)
+        // PERUBAHAN: Fungsi ini sekarang menerima 'components' (yang sudah difilter)
         async function autoScheduleProduction_Simple(startDate, components) {
 
             const proposedSlots = [];
@@ -2054,7 +2145,7 @@
 
             await fetchScheduleData(startDateStr, date60DaysLaterStr);
 
-            // 2. Loop melalui setiap komponen yang perlu dijadwalkan
+            // 2. Loop melalui setiap komponen yang perlu dijadwalkan (components SUDAH difilter)
             for (const component of components) {
                 let remainingShiftNet = component.shiftNet; // Shift Net yang harus dialokasikan
                 const totalShiftNeeded = Math.ceil(remainingShiftNet); // Kebutuhan slot (dibulatkan)
@@ -2233,6 +2324,8 @@
             const autoSchedulePanel = document.getElementById('autoSchedulePanel');
             const autoScheduleForm = document.getElementById('autoScheduleFormGrid');
             const autoScheduleStatus = document.getElementById('autoScheduleStatus');
+            // BARU: Referensi ke panel pilihan komponen
+            const componentSelectionPanel = document.getElementById('componentSelectionContainer');
 
 
             if (!printArea || !window.jspdf || !window.html2canvas) {
@@ -2251,6 +2344,7 @@
             }
             toggleBtnContainer.classList.add('hidden'); // Sembunyikan tombol toggle
             printArea.classList.add('pdf-export-font'); // <-- BARU: Tambahkan kelas font besar
+            componentSelectionPanel.classList.add('hidden'); // <-- BARU: Selalu sembunyikan pilihan komponen saat cetak PDF
 
             // --- PERBAIKAN LOGIKA PDF ---
             // Cek apakah status simulasi terlihat
@@ -2380,6 +2474,7 @@
                 }
                 toggleBtnContainer.classList.remove('hidden'); // Tampilkan lagi tombol toggle
                 printArea.classList.remove('pdf-export-font'); // <-- BARU: Hapus kelas font besar
+                componentSelectionPanel.classList.remove('hidden'); // <-- BARU: Tampilkan kembali (jika seharusnya terlihat)
                 
                 // --- PERBAIKAN: Kembalikan visibilitas panel auto-schedule ---
                 autoScheduleForm.classList.remove('hidden');
@@ -3888,6 +3983,11 @@
             const code = document.getElementById('productCode').value.trim();
             const orderQtyInput = document.getElementById('orderQty').value;
             const orderQtyDus = cleanInt(orderQtyInput);
+            
+            // BARU: Sembunyikan panel pilihan komponen saat perhitungan baru dimulai
+            const componentSelectionPanel = document.getElementById('componentSelectionContainer');
+            componentSelectionPanel.classList.add('hidden');
+            document.getElementById('componentSelectionList').innerHTML = ''; // Kosongkan list
 
             if (!code) {
                 showMessage(`Mohon masukkan Kode Barang.`, "error");
@@ -4055,6 +4155,12 @@
 
             document.getElementById('estimationDetails').innerHTML = componentDetailsHTML + simplifiedFinalSummaryHTML;
             document.getElementById('results').classList.remove('hidden');
+            
+            // =================================================================
+            // BARU: Render daftar pilihan komponen
+            // =================================================================
+            renderComponentSelectionList(pendingScheduleComponents);
+            // =================================================================
 
             showMessage(`Estimasi berhasil dihitung untuk Kode ${code} (Agregat ${matchingProducts.length} Komponen)!`, "info");
 
@@ -4062,10 +4168,14 @@
             const autoSchedulePanel = document.getElementById('autoSchedulePanel');
             if (isLoggedIn) {
                 autoSchedulePanel.classList.remove('hidden');
+                // BARU: Tampilkan container checklist (sudah dihandle oleh renderComponentSelectionList)
+                // componentSelectionPanel.classList.remove('hidden'); // Tidak perlu, sudah di handle
                 document.getElementById('autoScheduleStatus').classList.add('hidden');
                 document.getElementById('autoScheduleStartDate').focus();
             } else {
                 autoSchedulePanel.classList.add('hidden'); // Pastikan tersembunyi untuk non-admin
+                // BARU: Sembunyikan container checklist
+                componentSelectionPanel.classList.add('hidden');
             }
         }
     </script>
