@@ -491,7 +491,7 @@
                 <!-- PERUBAHAN: Menambahkan max-h-[70vh] (70% tinggi layar) dan overflow-y-auto -->
                 <!-- PERBAIKAN: Menambahkan 'w-full' untuk memperbaiki bug scroll horizontal di HP -->
                 <div id="planningTableWrapper" class="w-full overflow-x-auto rounded-lg shadow-md hidden max-h-[70vh] overflow-y-auto">
-                    <div class="flex justify-between items-center bg-white p-4 border-b border-gray-200">
+                    <div class="flex justify-between items-center bg-white p-4 border-b border-gray-200 sticky top-0 z-30">
                         <!-- Judul dan Close Button -->
                         <!-- PERUBAHAN: Dibungkus div untuk flexbox -->
                         <div class="flex items-center space-x-4">
@@ -532,7 +532,11 @@
             <!-- Tabel Data Laju Produksi Asumsi -->
             <div id="masterTableContainer">
                 <div class="mt-10 pt-4 border-t border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-3">Data Master Produksi Tersimpan</h2>
+                    <h2 class="text-xl font-semibold text-gray-800 mb-3">
+                        Data Master Produksi Tersimpan
+                        <!-- BARU: Span untuk menampilkan jumlah total -->
+                        <span id="masterDataTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
+                    </h2>
 
                     <!-- BARU: Search Input Field -->
                     <div class="mb-4 relative">
@@ -558,7 +562,11 @@
                 <div id="scheduleMasterSection" class="mt-10 pt-4 border-t border-gray-200">
                     <!-- BARU: Flex container for title and button -->
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold text-gray-800">Data Master Jadwal Mesin Tersimpan</h2>
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Data Master Jadwal Mesin Tersimpan
+                            <!-- BARU: Span untuk menampilkan jumlah total slot -->
+                            <span id="scheduleMasterTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
+                        </h2>
                         <!-- BARU: Tombol Export Excel untuk Master Jadwal -->
                         <button id="exportMasterScheduleButton" onclick="exportMasterScheduleToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -752,29 +760,30 @@
 
         // Data Mesin Statis (Dari input user)
         const STATIC_MACHINE_DATA = [
-            { code: 'A01', type: 'HC 450' }, { code: 'A02', type: 'HC 450' }, { code: 'A03', type: 'CF 600' },
-            { code: 'A04', type: 'BC 400' }, { code: 'A05', type: 'BC 400' }, { code: 'A06', type: 'BC 700' },
-            { code: 'A07', type: 'BC 700' }, { code: 'A08', type: 'CF 1300' }, { code: 'A09', type: 'CF 1300' },
-            { code: 'A10', type: 'HC 1000' }, { code: 'A11', type: 'HC 1680' }, { code: 'A12', type: 'HC 1680' },
-            { code: 'A13', type: 'CF 800' }, { code: 'A14', type: 'HC 600' }, { code: 'A15', type: 'HC 600' },
-            { code: 'A16', type: 'HC 600' }, { code: 'A17', type: 'HC 600' }, { code: 'A18', type: 'HC 600' },
-            { code: 'A19', type: 'HC 600' }, { code: 'A20', type: 'HC 600' }, { code: 'A21', type: 'NB 650' },
-            { code: 'A22', type: 'NB 650' }, { code: 'A23', type: 'LG 650' }, { code: 'A24', type: 'BC 350' },
-            { code: 'A25', type: 'BC 350' }, { code: 'A26', type: 'HW 400' }, { code: 'A27', type: 'HW 430' },
-            { code: 'B01', type: 'BC 320' }, { code: 'B02', type: 'BC 260' }, { code: 'B03', type: 'NS 160' },
-            { code: 'B04', type: 'NS 80' }, { code: 'B05', type: 'NS 180' }, { code: 'B06', type: 'HC 250' },
-            { code: 'B07', type: 'HC 250' }, { code: 'B08', type: 'HC 350' }, { code: 'B09', type: 'HC 350' },
-            { code: 'B10', type: 'BC 300' }, { code: 'B11', type: 'BC 300' }, { code: 'B12', type: 'NS 220' },
-            { code: 'B13', type: 'HW 288' }, { code: 'B14', type: 'HW 288' }, { code: 'B15', type: 'HW 228' },
-            { code: 'B16', type: 'HW 288' }, { code: 'B17', type: 'HW 288' }, { code: 'B18', type: 'HW 288' },
-            { code: 'B19', type: 'HC 160' }, { code: 'B20', type: 'BC 150' }, { code: 'B21', type: 'BC 150' },
-            { code: 'B22', type: 'BC 150' }, { code: 'B23', type: 'LG 170' }, { code: 'B24', type: 'NS 80' },
-            { code: 'B25', type: 'HC 350' }, { code: 'B26', type: 'HC 350' }, { code: 'B27', type: 'HC 450' },
-            { code: 'C01', type: 'NS 110' }, { code: 'C02', type: 'NS 150' }, { code: 'C03', type: 'HC 125' },
-            { code: 'C04', type: 'HC 125' }, { code: 'C05', type: 'HC 125' }, { code: 'C06', type: 'HC 125' },
-            { code: 'D01', type: 'BC 600' }, { code: 'D02', type: 'BC 500' }, { code: 'D03', type: 'BC 500' },
-            { code: 'D04', type: 'BC 400' }, { code: 'D05', type: 'HW 600' }, { code: 'D06', type: 'HW 400' },
-            { code: 'D07', type: 'HW 288' }
+            { code: 'A01', type: 'HC -450 T' }, { code: 'A02', type: 'HC -450 T' }, { code: 'A03', type: 'CF -600 T' },
+            { code: 'A04', type: 'BORC -400 T' }, { code: 'A05', type: 'BORC -400 T' }, { code: 'A06', type: 'BORC -400 T' },
+            { code: 'A07', type: 'BORC -400 T' }, { code: 'A08', type: 'BORC -700 T' }, { code: 'A09', type: 'CF -1300 T' },
+            { code: 'A10', type: 'CF -1300 T' }, { code: 'A11', type: 'BORC -1000 T' }, { code: 'A12', type: 'HWD -1300 T' },
+            { code: 'A13', type: 'HC -1600 T' }, { code: 'A14', type: 'HT -1300 T' }, { code: 'A15', type: 'CF -800 T' },
+            { code: 'A16', type: 'HC -800 T' }, { code: 'A17', type: 'NISS -360 T' }, { code: 'A18', type: 'HC -600 T' },
+            { code: 'A19', type: 'HC -600 T' }, { code: 'A20', type: 'HC -600 T' }, { code: 'A21', type: 'NISS -460 T' },
+            { code: 'A22', type: 'NB -650 T' }, { code: 'A23', type: 'LG -650 T' }, { code: 'A24', type: 'BORC -500 T' },
+            { code: 'A25', type: 'HT -650 T' }, { code: 'A26', type: 'BORC -400 T' }, { code: 'A27', type: 'HWAM -430 T' },
+            { code: 'A28', type: 'HWAM -430 T' },
+            { code: 'B01', type: 'BORC -320 T' }, { code: 'B02', type: 'BORC -260T' }, { code: 'B03', type: 'NISS -180 T' },
+            { code: 'B04', type: 'NISS -80 T' }, { code: 'B05', type: 'NISS -180 T' }, { code: 'B06', type: 'HC -250 T' },
+            { code: 'B07', type: 'HC -250 T' }, { code: 'B08', type: 'HC -250 T' }, { code: 'B09', type: 'HC -350 T' },
+            { code: 'B10', type: 'HC -300 T' }, { code: 'B11', type: 'BORC -250 T' }, { code: 'B12', type: 'NISS -220 T' },
+            { code: 'B13', type: 'HMD -228 T' }, { code: 'B14', type: 'HMD -288 T' }, { code: 'B15', type: 'HMD -228 T' },
+            { code: 'B16', type: 'HMD -228 T' }, { code: 'B17', type: 'HMD -228 T' }, { code: 'B18', type: 'HMD -228 T' },
+            { code: 'B19', type: 'HWA -160 T' }, { code: 'B20', type: 'BORC -150 T' }, { code: 'B21', type: 'HWA -125 T' },
+            { code: 'B22', type: 'BORC -150 T' }, { code: 'B23', type: 'LG -170 T' }, { code: 'B24', type: 'NISS -80 T' },
+            { code: 'B25', type: 'LG -170 T' }, { code: 'B26', type: 'HWA -350 T' }, { code: 'B27', type: 'HWA -450 T' },
+            { code: 'C01', type: 'NISS -80 T' }, { code: 'C02', type: 'NISS -110 T' }, { code: 'C03', type: 'HC -125 T' },
+            { code: 'C04', type: 'HC -125 T' }, { code: 'C05', type: 'HC -125 T' }, { code: 'C06', type: 'HC -125 T' },
+            { code: 'D01', type: 'BORC -600 T' }, { code: 'D02', type: 'BORC -260 T' }, { code: 'D03', type: 'BORC -500 T' },
+            { code: 'D04', type: 'BORC -400 T' }, { code: 'D05', type: 'HWD -600 T' }, { code: 'D06', type: 'HWD -430 T' },
+            { code: 'D07', type: 'HWD -288 T' }, { code: 'D08', type: 'HWD -310 T' }, { code: 'D09', type: 'HWD -218 T' }
         ];
 
 
@@ -2785,8 +2794,8 @@
             // 3.1 MEMBUAT HEADER
 
             let headerRowHTML = `
-                <th class="py-3 px-3 border-b border-r sticky left-0 bg-indigo-50 z-20 sticky-col-header text-center text-sm font-bold" style="min-width: 120px;">MESIN</th>
-                <th class="py-3 px-3 border-b border-r sticky left-[120px] bg-indigo-50 z-20 sticky-col-header text-center text-sm font-bold" style="min-width: 80px;">SHIFT</th>
+                <th class="py-3 px-3 border-b-2 border-r-2 border-gray-300 sticky left-0 bg-indigo-50 z-20 sticky-col-header text-center text-sm font-bold" style="min-width: 120px;">MESIN</th>
+                <th class="py-3 px-3 border-b-2 border-r-2 border-gray-300 sticky left-[120px] bg-indigo-50 z-20 sticky-col-header text-center text-sm font-bold" style="min-width: 60px;">SHIFT</th>
             `;
 
             // Kolom Header akan diulang untuk setiap tanggal (Hanya 1 kolom per tanggal)
@@ -2795,7 +2804,7 @@
 
                 // SETIAP KOLOM ADALAH SATU TANGGAL
                 headerRowHTML += `
-                    <th class="py-3 px-3 border-b border-r text-center ${classWeekend} text-sm uppercase font-bold"
+                    <th class="py-3 px-3 border-b-2 border-r-2 border-gray-300 text-center ${classWeekend} text-sm uppercase font-bold"
                         style="min-width: 100px;">
                         ${d.displayDate} (${d.weekday})
                     </th>
@@ -2803,9 +2812,12 @@
             });
 
 
+            // PERBAIKAN: Memindahkan sticky styling dari <tr> ke <thead>
+            // Judul bar memiliki p-4 (1rem top/bottom) + content (max h-6/1.5rem) = ~3.5rem (56px).
+            // Kita set top-14 (3.5rem / 56px) for thead.
             let tableHTML = `
-                    <thead>
-                        <tr class="bg-indigo-50 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider sticky top-0">
+                    <thead class="sticky z-20 top-14"> 
+                        <tr class="bg-indigo-50 text-left text-xs font-semibold text-indigo-700 uppercase tracking-wider">
                             ${headerRowHTML}
                         </tr>
                     </thead>
@@ -2840,10 +2852,10 @@
                     const rowClass = (shiftIndex % 2 === 0) ? '' : 'bg-gray-50';
 
                     tableHTML += `
-                        <tr class="border-b hover:bg-gray-100 ${rowClass}">
+                        <tr class="border-b-2 border-gray-300 hover:bg-gray-100 ${rowClass}">
                             <!-- Kolom Mesin Utama (STICKY) -->
                             ${isFirstRow ? `
-                                <td class="py-1 px-3 border-r text-gray-800 font-bold align-top sticky-machine ${rowClass}"
+                                <td class="py-1 px-3 border-r-2 border-gray-300 text-gray-800 font-bold align-top sticky-machine ${rowClass}"
                                     style="min-width: 120px;"
                                     rowspan="${shifts.length}">
                                     
@@ -2858,7 +2870,7 @@
                                             </span>
                                         ` : ''}
                                     </div>
-                                    <span class="text-xs font-normal text-gray-500 block">${machineType}</span>
+                                    <span class="text-xs font-bold text-gray-500 block">${machineType}</span>
                                     
                                     <!-- DIV DAFTAR PRODUK YANG LAMA DIHAPUS -->
                                     <!-- (Baris kode yang menyebabkan error telah dihapus) -->
@@ -2866,7 +2878,7 @@
                             ` : ''}
 
                             <!-- Kolom Shift (STICKY) -->
-                            <td class="py-1 px-3 border-r text-gray-700 align-top sticky-shift ${rowClass}" style="min-width: 80px;">
+                            <td class="py-1 px-3 border-r-2 border-gray-300 text-gray-700 align-top sticky-shift ${rowClass}" style="min-width: 60px;">
                                 ${shift.split(' ')[1]}
                             </td>
 
@@ -2950,7 +2962,7 @@
                                 // Hanya satu kolom slot per Tanggal
                                 return `
                                     <!-- PERBAIKAN: Tinggi sel diubah dari h-12 menjadi h-16 agar seragam -->
-                                    <td class="py-1 px-1 text-center border-r ${classWeekend} ${textClass} h-16" style="min-width: 100px;">
+                                    <td class="py-1 px-1 text-center border-r-2 border-gray-300 ${classWeekend} ${textClass} h-16" style="min-width: 100px;">
                                         ${slotContent}
                                     </td>
                                 `;
@@ -3086,6 +3098,9 @@
             const container = document.getElementById('scheduleMasterContainer'); // <-- PERBAIKAN: Target container HANYA untuk tabel
             // await fetchAllScheduleData(); // DIHAPUS: Ini dipindahkan ke showView('master')
 
+            // BARU: Dapatkan elemen span total untuk tabel jadwal
+            const totalCountSpan = document.getElementById('scheduleMasterTotalCount');
+
             // BARU: Filter data berdasarkan searchQuery
             const filteredData = masterScheduleData.filter(data => {
                 if (!searchQuery) return true;
@@ -3120,14 +3135,37 @@
             if (masterScheduleData.length === 0) {
                  tableHTML += `<p class="text-gray-500 p-4 bg-white">Belum ada slot jadwal yang tersimpan. Silakan input jadwal di tab Perencanaan Mesin.</p>`;
                  container.innerHTML = tableHTML;
+                 // PERUBAHAN: Update count
+                 if (totalCountSpan) totalCountSpan.textContent = '(0 Total Kode)';
                  return;
             }
+
+            // BARU: Hitung Kode Unik (Total)
+            const totalUniqueCodes = new Set(masterScheduleData.map(data => data.product_code));
+            const totalUniqueCount = totalUniqueCodes.size;
 
             // Cek 2: Jika filter tidak menemukan hasil
             if (filteredData.length === 0 && searchQuery) {
                 tableHTML += `<p class="text-gray-500 p-4 bg-white">Tidak ada hasil ditemukan untuk "${searchQuery}".</p>`;
                 container.innerHTML = tableHTML;
+                // PERUBAHAN: Update count
+                if (totalCountSpan) totalCountSpan.textContent = `(Menampilkan 0 dari ${totalUniqueCount} total kode)`;
                 return;
+            }
+
+            // BARU: Hitung Kode Unik (Filtered)
+            const filteredUniqueCodes = new Set(filteredData.map(data => data.product_code));
+            const filteredUniqueCount = filteredUniqueCodes.size;
+
+            // BARU: Update count (setelah Cek 1 dan Cek 2)
+            if (totalCountSpan) {
+                if (searchQuery) {
+                    // PERUBAHAN: Menggunakan hitungan kode unik
+                    totalCountSpan.textContent = `(Menampilkan ${filteredUniqueCount} dari ${totalUniqueCount} total kode)`;
+                } else {
+                    // PERUBAHAN: Menggunakan hitungan kode unik
+                    totalCountSpan.textContent = `(${totalUniqueCount} Total Kode)`;
+                }
             }
 
             // Lanjutkan membangun tabel jika ada data
@@ -3143,6 +3181,8 @@
                                 ${isLoggedIn ? `<th class="py-3 px-4 border-b w-12 text-center">
                                     <input type="checkbox" id="selectAllSchedulesCheckbox" onclick="toggleSelectAllSchedules(this)" class="rounded border-gray-400 focus:ring-indigo-500">
                                 </th>` : ''}
+                                <!-- BARU: Kolom Nomor -->
+                                <th class="py-3 px-4 border-b w-12 text-center">#</th>
                                 <th class="py-3 px-4 border-b">Mesin Utama</th>
                                 <th class="py-3 px-4 border-b">Kode Produk</th>
                                 <!-- BARU: Kolom Nama Komponen -->
@@ -3213,6 +3253,8 @@
                 tableHTML += `
                     <tr class="border-b hover:bg-gray-100 ${rowClass}">
                         ${checkboxCell} <!-- BARU: Tambah sel checkbox -->
+                        <!-- BARU: Sel Nomor -->
+                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
                         <td class="py-3 px-4 text-gray-800 font-bold">${data.mesin}</td>
                         <td class="py-3 px-4 text-gray-700 font-mono">
                             ${data.product_code}
@@ -3880,6 +3922,8 @@
         function renderRateTable(searchQuery = '') {
             const container = document.getElementById('rateTableContainer');
             const dataArray = Object.values(productionData);
+            // BARU: Dapatkan elemen span total
+            const totalCountSpan = document.getElementById('masterDataTotalCount');
 
             if (dataArray.length === 0) {
                 container.innerHTML = '<p class="text-gray-500 p-4">Belum ada data produksi yang tersimpan. Silakan tambahkan data menggunakan formulir di halaman Estimasi Produksi (setelah login admin).</p>';
@@ -3898,6 +3942,17 @@
                 );
             });
 
+            // BARU: Update text di span
+            if (totalCountSpan) {
+                if (searchQuery) {
+                    // Jika sedang mencari, tampilkan "Menampilkan X dari Y"
+                    totalCountSpan.textContent = `(Menampilkan ${filteredData.length} dari ${dataArray.length} total)`;
+                } else {
+                    // Jika tidak, tampilkan "Y Total"
+                    totalCountSpan.textContent = `(${dataArray.length} Total)`;
+                }
+            }
+
             // BARU: Urutkan filteredData berdasarkan 'code' (Kode Barang) secara ascending (A-Z, 1-9)
             filteredData.sort((a, b) => a.code.localeCompare(b.code));
 
@@ -3914,6 +3969,8 @@
                     <thead class="sticky top-0 bg-gray-100 z-10">
                         <!-- PERBAIKAN: bg-gray-100 dihapus dari tr -->
                         <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <!-- BARU: Kolom Nomor -->
+                            <th class="py-3 px-4 border-b w-12 text-center">#</th>
                             <th class="py-3 px-4 border-b">Kode Barang</th>
                             <th class="py-3 px-4 border-b">Nama Komponen / Produk</th>
                             <th class="py-3 px-4 border-b">Mesin Utama</th>
@@ -3958,6 +4015,8 @@
 
                 tableHTML += `
                     <tr class="border-b hover:bg-gray-100 ${rowClass}">
+                        <!-- BARU: Sel Nomor -->
+                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
                         <!-- PERUBAHAN: whitespace-nowrap ditambahkan -->
                         <td class="py-3 px-4 text-gray-800 font-mono whitespace-nowrap">${data.code}</td>
                         <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.name}</td>
