@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Estimasi Produksi & Perencanaan Mesin</title>
-    <!-- BARU: FAVICON (Ikon Tab Browser) -->
+    <!-- FAVICON (Ikon Tab Browser) -->
     <link rel="icon" type="image/jpeg" href="https://img.lazcdn.com/g/ff/kf/Sedf6893749284ee49d1a9d1d34119487A.jpg_720x720q80.jpg">
     <!-- Memuat Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Memuat Supabase SDK dari CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- BARU: Memuat jsPDF (untuk buat PDF) dan html2canvas (untuk screenshot HTML) -->
+    <!-- Memuat jsPDF (untuk buat PDF) dan html2canvas (untuk screenshot HTML) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <!-- BARU: Memuat xlsx.js (SheetJS) untuk export Excel -->
+    <!-- Memuat xlsx.js (SheetJS) untuk export Excel -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Konfigurasi Font Inter -->
     <style>
@@ -84,55 +84,44 @@
             opacity: 1;
         }
 
-        /* BARU: CSS untuk memperbesar font PDF */
-        /* Kelas ini akan ditambahkan ke #estimationPrintArea selama ekspor */
-        /* PERUBAHAN: Ukuran font diperbesar lagi */
-        .pdf-export-font .text-xs { font-size: 16px !important; line-height: 1.5; } /* Tabel (dari 14px) */
-        .pdf-export-font .text-sm { font-size: 18px !important; line-height: 1.5; } /* Teks detail, judul kartu (dari 16px) */
-        .pdf-export-font .text-base { font-size: 20px !important; line-height: 1.5; } /* Teks list total (dari 18px) */
-        .pdf-export-font .text-lg { font-size: 22px !important; line-height: 1.5; } /* Judul Rincian (dari 20px) */
-        .pdf-export-font .text-xl { font-size: 24px !important; line-height: 1.5; } /* Judul Total (dari 22px) */
-        .pdf-export-font .text-3xl { font-size: 34px !important; line-height: 1.5; } /* Angka di kartu (dari 32px) */
+        /* CSS untuk memperbesar font PDF */
+        .pdf-export-font .text-xs { font-size: 16px !important; line-height: 1.5; } 
+        .pdf-export-font .text-sm { font-size: 18px !important; line-height: 1.5; }
+        .pdf-export-font .text-base { font-size: 20px !important; line-height: 1.5; }
+        .pdf-export-font .text-lg { font-size: 22px !important; line-height: 1.5; }
+        .pdf-export-font .text-xl { font-size: 24px !important; line-height: 1.5; }
+        .pdf-export-font .text-3xl { font-size: 34px !important; line-height: 1.5; }
     </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen">
 
-    <!-- PERUBAHAN: Menghapus 'max-w-7xl' dan 'mx-auto' agar aplikasi menggunakan lebar penuh (full width) -->
     <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl">
 
         <!-- HEADER ROW: LOGO, TITLE, & LOGIN BUTTON -->
         <div class="flex flex-col md:flex-row justify-between items-center mb-4 border-b-4 border-indigo-100 pb-2">
 
-            <!-- Logo dan Judul Dikelompokkan -->
-            <!-- Menggunakan justify-between di mobile untuk memisahkan Logo/Judul dan Tombol Login -->
             <div class="flex justify-between w-full md:w-auto items-center space-x-3 mb-2 md:mb-0">
-
                 <div class="flex items-center space-x-3">
-                    <!-- Placeholder Logo -->
                     <img src="https://img.lazcdn.com/g/ff/kf/Sf1cc8d330638465fa063a736e486ed5fK.jpg_720x720q80.jpg"
                         alt="Logo Perusahaan"
                         class="h-16 w-16 rounded-lg shadow-md">
 
-                    <!-- Judul menyusut pada layar kecil (text-2xl) dan normal di layar lebar (text-3xl) -->
                     <h1 class="text-2xl sm:text-3xl font-extrabold text-indigo-700">
                         Estimasi Produksi & Perencanaan Mesin
                     </h1>
                 </div>
 
-                <!-- Tombol Admin Login/Logout (Diubah posisinya agar tetap di kanan atas di mobile) -->
                 <button id="adminLoginButton" onclick="toggleAdminLogin()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md text-sm md:hidden">
                     Login
                 </button>
             </div>
 
-            <!-- Tombol Admin Login/Logout untuk PC/Tablet (hanya tampil di md: ke atas) -->
             <button id="adminLoginButtonDesktop" onclick="toggleAdminLogin()" class="hidden md:block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md text-sm">
                     Login
             </button>
         </div>
 
-        <!-- Tab Navigasi Baru -->
-        <!-- Memastikan tab menggunakan flex-wrap agar tidak tumpang tindih di mobile, meskipun di sini sudah cukup -->
+        <!-- Tab Navigasi -->
         <div class="flex border-b border-gray-200 mb-8 overflow-x-auto whitespace-nowrap">
             <button id="tabEstimation" onclick="showView('estimation')" class="px-4 py-2 text-gray-500 hover:text-indigo-600 transition duration-150">
                 Estimasi Produksi
@@ -149,10 +138,7 @@
             Hitung Estimasi Produksi
         </p>
 
-        <!-- ============================================== -->
         <!-- FORMULIR INPUT DATA PRODUKSI BARU (GLOBAL) -->
-        <!-- Menggunakan warna Cyan (Biru Muda) sebagai sekunder -->
-        <!-- ============================================== -->
         <div id="adminPanel" class="mb-10 p-6 bg-cyan-50 rounded-xl border border-cyan-200 hidden">
             <h2 class="text-xl font-bold text-cyan-800 mb-4 flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -160,12 +146,9 @@
                 </svg>
                 Formulir Data Produksi Baru
             </h2 >
-            <!-- PERUBAHAN: lg:grid-cols-4 -->
             <form id="productionDataForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <!-- Field tersembunyi untuk ID saat Edit -->
                 <input type="hidden" id="inputId" value="">
 
-                <!-- Row 1: Kode, Komponen, Mesin, Mesin (Optional) -->
                 <div>
                     <label for="inputCode" class="block text-sm font-medium text-gray-700">Kode Barang *</label>
                     <input type="text" id="inputCode" placeholder="Contoh: 110" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 text-gray-800 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
@@ -175,44 +158,35 @@
                     <input type="text" id="inputName" placeholder="Contoh: Komponen Standard X" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
                 </div>
                 <div>
-                    <!-- DIKEMBALIKAN: "Mesin Utama" -->
                     <label for="inputMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
                     <input type="text" id="inputMachine" placeholder="Contoh: Mesin A01" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
                 </div>
-                <!-- BARU: "Mesin (Optional)" -->
                 <div>
                     <label for="inputMachineOptional" class="block text-sm font-medium text-gray-700">Mesin (Optional)</label>
                     <input type="text" id="inputMachineOptional" placeholder="Contoh: A02, A03" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
                 </div>
 
 
-                <!-- Row 2: Calculation Inputs & Output -->
-                <!-- PERUBAHAN: lg:col-span-1 (dari lg:col-span-3) -->
                 <div>
                     <label for="inputPcsPerBox" class="block text-sm font-medium text-gray-700">Isi Dus (pcs) *</label>
                     <input type="text" id="inputPcsPerBox" placeholder="Contoh: 100" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm">
                 </div>
-                <!-- PERUBAHAN: lg:col-span-1 -->
                 <div>
                     <label for="inputTargetPerShift" class="block text-sm font-medium text-gray-700">Target per Shift (pcs) *</label>
                     <input type="text" id="inputTargetPerShift" placeholder="Contoh: 8000" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm">
                 </div>
-                <!-- PERUBAHAN: lg:col-span-1 -->
                 <div class="flex flex-col">
                     <label for="capacity3Shift" class="block text-sm font-medium text-gray-700">Kapasitas 3 Shift (pcs)</label>
                     <input type="text" id="capacity3Shift" readonly value="Otomatis Terisi" class="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-inner">
                 </div>
 
-                <!-- PERUBAHAN: lg:col-span-4 -->
                 <div class="sm:col-span-2 lg:col-span-4 pt-2 flex space-x-3">
-                    <!-- Tombol Simpan/Update (Warna Biru/Indigo) -->
                     <button type="submit" id="submitButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                           <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3 3m3-3V4" />
                         </svg>
                         Simpan Data Produksi
                     </button>
-                    <!-- Tombol Batal Edit (Warna Gray) -->
                     <button type="button" id="cancelEditButton" onclick="cancelEdit()" class="hidden w-1/4 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg">
                         Batal Edit
                     </button>
@@ -220,23 +194,16 @@
             </form>
         </div>
 
-        <!-- ============================================== -->
         <!-- VIEW 1: ESTIMASI PRODUKSI (DEFAULT) -->
-        <!-- ============================================== -->
         <div id="estimationView" class="view-content">
 
-            <!-- Container untuk Form Input Estimasi, disembunyikan jika Admin Login -->
             <div id="estimationFormContainer">
-                <!-- Bagian Input Estimasi -->
                 <div class="grid grid-cols-1 md:col-span-3 gap-6 mb-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
                     <div>
                         <label for="productCode" class="block text-sm font-medium text-gray-700 mb-1">Kode Produk (Ketik untuk Mencari)</label>
-                        <!-- PENTING: Menghapus kelas uppercase-input dan oninput untuk placeholder ini -->
                         <input type="text" id="productCode" placeholder="Masukkan Kode Barang" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm transition duration-150 ease-in-out" list="productCodeList" oninput="this.value = this.value.toUpperCase()">
 
-                        <!-- Datalist untuk memberikan saran (seperti autocomplete) -->
                         <datalist id="productCodeList">
-                            <!-- Opsi akan diisi oleh JavaScript -->
                         </datalist>
 
                     </div>
@@ -244,9 +211,7 @@
                         <label for="orderQty" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pesanan (Dus)</label>
                         <input type="number" id="orderQty" placeholder="Contoh: 1500" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition duration-150 ease-in-out" min="1">
                     </div>
-                    <!-- CONTAINER PERUBAHAN WIDHT TOMBOL -->
                     <div class="md:col-span-3 flex justify-center">
-                        <!-- Tombol Estimasi (Warna Biru/Indigo) -->
                         <button onclick="calculateEstimation()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.01] shadow-lg shadow-indigo-500/50">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
@@ -258,13 +223,10 @@
             </div>
 
 
-            <!-- Bagian Hasil Estimasi -->
             <div id="results" class="hidden">
 
-                <!-- BARU: Wrapper untuk Judul dan Tombol PDF -->
                 <div class="flex justify-between items-center mb-4 border-b pb-2">
                     <h2 class="text-2xl font-semibold text-gray-800">Hasil Estimasi Waktu</h2>
-                    <!-- BARU: Tombol Export PDF (ditambahkan kelas 'hidden') -->
                     <button id="exportPdfButton" onclick="exportEstimationToPDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out shadow-md text-sm flex items-center hidden">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -273,89 +235,57 @@
                     </button>
                 </div>
 
-                <!-- BARU: Wrapper Area Cetak PDF -->
                 <div id="estimationPrintArea">
-                    <!-- PERBAIKAN: Mengembalikan 3 kartu hasil estimasi yang hilang -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
-                        <!-- Kartu Jam -->
                         <div class="p-4 bg-indigo-100 rounded-lg shadow border border-indigo-200">
                             <h3 class="text-sm font-medium text-indigo-700">Total Jam Produksi</h3>
-                            <!-- PERUBAHAN: Dikecilkan di HP (text-2xl) dan tetap besar di (sm) -->
                             <p id="resultHours" class="text-2xl sm:text-3xl font-bold text-indigo-900 mt-1">--</p>
                         </div>
                         
-                        <!-- Kartu Shift -->
                         <div class="p-4 bg-blue-100 rounded-lg shadow border border-blue-200">
                             <h3 class="text-sm font-medium text-blue-700">Total Shift Produksi</h3>
-                            <!-- PERUBAHAN: Dikecilkan di HP (text-2xl) dan tetap besar di (sm) -->
                             <p id="resultShifts" class="text-2xl sm:text-3xl font-bold text-blue-900 mt-1">--</p>
                         </div>
                         
-                        <!-- Kartu Hari -->
                         <div class="p-4 bg-orange-100 rounded-lg shadow border border-orange-200">
                             <h3 class="text-sm font-medium text-orange-700">Total Hari Produksi</h3>
-                            <!-- PERUBAHAN: Dikecilkan di HP (text-2xl) dan tetap besar di (sm) -->
                             <p id="resultDays" class="text-2xl sm:text-3xl font-bold text-orange-900 mt-1">--</p>
                         </div>
                     </div>
-                    <!-- AKHIR PERBAIKAN -->
 
-                    <!-- Detail Pesanan (PINDAH KE SINI) -->
                     <div id="estimationDetails" class="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 border border-gray-200 hidden">
-                        <!-- Detail estimasi akan ditampilkan di sini -->
                     </div>
                     
-                    <!-- ===================================================================== -->
-                    <!-- PERUBAHAN: Panel Auto-Schedule DIPINDAHKAN KE DALAM Area Cetak PDF -->
-                    <!-- ===================================================================== -->
                     <div id="autoSchedulePanel" class="mt-8 p-6 bg-green-50 rounded-xl border border-green-200 hidden">
                         <h3 class="text-lg font-bold text-green-800 mb-4">Penjadwalan Otomatis Berdasarkan Estimasi</h3>
                         
-                        <!-- ====================================================== -->
-                        <!-- BARU: Container Pilihan Komponen (Implementasi Fitur) -->
-                        <!-- ====================================================== -->
                         <div id="componentSelectionContainer" class="mt-4 mb-4 p-4 border border-green-200 rounded-lg bg-white hidden">
                             <h4 class="text-base font-semibold text-gray-700 mb-3">Pilih Komponen untuk Dijadwalkan:</h4>
-                            <!-- Checkbox "Pilih Semua" -->
                             <div class="mb-2 border-b pb-2">
                                 <input type="checkbox" id="selectAllComponents" onchange="toggleSelectAll(this)" class="rounded border-gray-400 focus:ring-indigo-500">
                                 <label for="selectAllComponents" class="ml-2 text-sm font-medium text-gray-800">Pilih Semua Komponen</label>
                             </div>
-                            <!-- Daftar Checkbox Komponen (diisi oleh JS) -->
                             <div id="componentSelectionList" class="max-h-40 overflow-y-auto space-y-2 pt-2">
-                                <!-- Checkbox list will be injected here by JS -->
                             </div>
                         </div>
-                        <!-- ====================================================== -->
-                        <!-- AKHIR BARU -->
-                        <!-- ====================================================== -->
 
-                        <!-- BARU: Menambahkan ID 'autoScheduleFormGrid' untuk menyembunyikan form saat cetak PDF -->
                         <div id="autoScheduleFormGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
                             <div class="sm:col-span-2">
                                 <label for="autoScheduleStartDate" class="block text-sm font-medium text-gray-700">Tanggal Mulai Produksi Ideal (DD/MM/YYYY)</label>
                                 <input type="text" id="autoScheduleStartDate" placeholder="Tanggal Mulai" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm" maxlength="10" oninput="formatDateInput(this)">
                             </div>
                             <div class="sm:col-span-1">
-                                <!-- PERUBAHAN: ID Tombol diubah -->
                                 <button id="autoScheduleButton" onclick="handleAutoScheduleClick()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded-lg transition duration-300 shadow-md">
-                                    <!-- Konten tombol (ikon/teks) akan diubah oleh JS -->
                                 </button>
                             </div>
                         </div>
                         <p id="autoScheduleStatus" class="text-xs text-green-700 mt-2 hidden">Hasil simulasi jadwal akan muncul di sini.</p>
                     </div>
-                    <!-- ===================================================================== -->
-                    <!-- AKHIR PEMINDAHAN PANEL -->
-                    <!-- ===================================================================== -->
-
-                </div> <!-- AKHIR Wrapper Area Cetak PDF (estimationPrintArea) -->
+                </div>
 
 
-                <!-- Tombol Toggle Detail Estimasi (Dipindahkan ke container baru) -->
                 <div id="toggleDetailsContainer" class="flex justify-end mb-4">
-                    <!-- Tombol Detail (Warna Abu-abu/Indigo) -->
                     <button id="toggleDetailsButton" onclick="toggleDetails()" class="text-sm text-gray-600 hover:text-indigo-600 font-medium transition duration-150 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="toggleIcon">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -364,34 +294,24 @@
                     </button>
                 </div>
 
-                <!-- Panel Auto-Schedule (DIHAPUS DARI SINI, SUDAH PINDAH) -->
-
             </div>
         </div>
 
-        <!-- ============================================== -->
         <!-- VIEW 2: PERENCANAAN MESIN -->
-        <!-- ============================================== -->
         <div id="planningView" class="view-content hidden">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Perencanaan Jadwal Mesin</h2>
 
-            <!-- FORM INPUT PERIODE TANGGAL (Visible to ALL) -->
             <div class="mb-6 p-4 bg-gray-100 rounded-lg shadow-inner">
                 <form id="planningForm" onsubmit="handlePlanningFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
                     <div class="sm:col-span-2">
                         <label for="startDate" class="block text-sm font-medium text-gray-700">Tanggal Mulai (Periode)</label>
-                        <!-- Input TEXT dengan mask otomatis DD/MM/YYYY -->
-                        <!-- PERUBAHAN: onblur ditambahkan -->
                         <input type="text" id="startDate" placeholder="DD/MM/YYYY" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" maxlength="10" oninput="formatDateInput(this)" onblur="autoSetEndDate()">
                     </div>
                     <div class="sm:col-span-2">
                         <label for="endDate" class="block text-sm font-medium text-gray-700">Tanggal Akhir (Periode)</label>
-                        <!-- Input TEXT dengan mask otomatis DD/MM/YYYY -->
-                        <!-- PERUBAHAN: required dihapus -->
                         <input type="text" id="endDate" placeholder="DD/MM/YYYY" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" maxlength="10" oninput="formatDateInput(this)">
                     </div>
                     <div class="sm:col-span-1">
-                        <!-- Tombol Tampilkan Jadwal: Mengurangi py-2 menjadi py-1.5 agar lebih kecil -->
                         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1 px-2 rounded-lg transition duration-300 shadow-md text-sm">
                             Tampilkan Jadwal
                         </button>
@@ -399,34 +319,24 @@
                 </form>
             </div>
 
-            <!-- BARU: FORMULIR INPUT JADWAL ADMIN (Tersembunyi jika belum login) -->
-            <!-- PERUBAHAN: grid-cols-7 -->
             <div id="scheduleInputForm" class="mb-6 p-6 bg-cyan-50 rounded-xl border border-cyan-200 hidden">
                 <h3 class="text-lg font-bold text-cyan-800 mb-4">Input Slot Jadwal (Admin)</h3>
-                <!-- Menambahkan input hidden untuk ID slot yang sedang diedit -->
-                <!-- PERUBAHAN: ID INI TIDAK LAGI DIGUNAKAN UNTUK EDIT, HANYA UNTUK LOGIKA LAMA (dihapus) -->
-                <!-- <input type="hidden" id="inputScheduleId" value=""> -->
-
-                <!-- PERUBAHAN: onsubmit memanggil saveScheduleSlot(false) -->
+                
                 <form onsubmit="event.preventDefault(); saveScheduleSlot(false);" class="grid grid-cols-1 sm:grid-cols-7 gap-3 items-end">
 
                     <div>
                         <label for="inputScheduleMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
-                        <!-- PERUBAHAN: onchange ditambahkan -->
                         <select id="inputScheduleMachine" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm" onchange="checkSlotAvailability()">
-                            <!-- Opsi akan diisi oleh JavaScript -->
                         </select>
                     </div>
 
                     <div>
                         <label for="inputScheduleDate" class="block text-sm font-medium text-gray-700">Tanggal</label>
-                        <!-- PERUBAHAN: onblur ditambahkan (oninput sudah ada) -->
                         <input type="text" id="inputScheduleDate" placeholder="DD/MM/YYYY" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm" maxlength="10" oninput="formatDateInput(this)" onblur="checkSlotAvailability()">
                     </div>
 
                     <div>
                         <label for="inputScheduleShift" class="block text-sm font-medium text-gray-700">Shift</label>
-                        <!-- PERUBAHAN: onchange ditambahkan -->
                         <select id="inputScheduleShift" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm" onchange="checkSlotAvailability()">
                             <option value="Shift 1">Shift 1</option>
                             <option value="Shift 2">Shift 2</option>
@@ -436,20 +346,16 @@
 
                     <div>
                         <label for="inputScheduleCode" class="block text-sm font-medium text-gray-700">Kode Barang</label>
-                        <!-- PERUBAHAN: onblur ditambahkan (oninput sudah ada) -->
                         <input type="text" id="inputScheduleCode" placeholder="Kode Brg" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm uppercase-input" oninput="this.value = this.value.toUpperCase()" onblur="findProductNameByCode()">
                     </div>
 
-                    <!-- BARU: Nama Komponen (Read-only) -->
                     <div class="sm:col-span-2">
                          <label for="inputScheduleName" class="block text-sm font-medium text-gray-700">Nama Komponen</label>
-                         <!-- PERUBAHAN: Diubah dari <input> menjadi <select> -->
                          <select id="inputScheduleName" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm" onchange="handleComponentSelectionChange()">
                             <option value="" disabled selected>Otomatis (Isi Kode)</option>
                          </select>
                     </div>
 
-                    <!-- Tombol Aksi (Simpan/Update dan Batal) -->
                     <div class="flex flex-col space-y-2">
                         <button type="submit" id="scheduleSubmitButton" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-2 rounded-lg transition duration-300 shadow-md text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -457,47 +363,29 @@
                             </svg>
                             Simpan Slot
                         </button>
-                        <!-- Tombol Batal Edit Jadwal -->
-                        <!-- PERUBAHAN: Tombol ini tidak lagi relevan untuk form 'Buat Baru' -->
-                        <!-- <button type="button" id="scheduleCancelButton" onclick="cancelScheduleEdit()" class="hidden ...">
-                             Batal Edit
-                        </button> -->
                     </div>
 
                 </form>
-                <!-- BARU: Pesan Status Slot -->
                 <p id="slotStatusMessage" class="text-sm font-bold mt-3 text-center"></p>
             </div>
 
 
-            <!-- Tabel Jadwal Mesin (Output) -->
             <div id="planningTableContainer">
                 
-                <!-- BARU: CONTAINER UNTUK RINGKASAN HARIAN (ON/OFF) -->
                 <div id="dailySummaryContainer" class="mb-4 hidden">
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">Ringkasan Beban Kerja Harian</h3>
                     
-                    <!-- PERBAIKAN: Wrapper BARU HANYA untuk overflow-x-auto -->
                     <div class="overflow-x-auto">
-                        <!-- Wrapper LAMA (tanpa overflow-x-auto) HANYA untuk flex layout -->
                         <div id="dailySummaryWrapper" class="flex space-x-3 pb-2">
-                            <!-- Kartu ringkasan akan diisi oleh JavaScript -->
                         </div>
                     </div>
                 </div>
-                <!-- AKHIR CONTAINER BARU -->
 
-                 <!-- Konten tabel disajikan di sini saat form di submit -->
-                <!-- PERUBAHAN: Menambahkan max-h-[70vh] (70% tinggi layar) dan overflow-y-auto -->
-                <!-- PERBAIKAN: Menambahkan 'w-full' untuk memperbaiki bug scroll horizontal di HP -->
                 <div id="planningTableWrapper" class="w-full overflow-x-auto rounded-lg shadow-md hidden max-h-[70vh] overflow-y-auto">
                     <div class="flex justify-between items-center bg-white p-4 border-b border-gray-200 sticky top-0 z-30">
-                        <!-- Judul dan Close Button -->
-                        <!-- PERUBAHAN: Dibungkus div untuk flexbox -->
                         <div class="flex items-center space-x-4">
                             <h3 class="text-lg font-semibold text-gray-800" id="planningTableTitle">Matriks Jadwal</h3>
                             
-                            <!-- BARU: Tombol Export Excel (muncul saat tabel ada) -->
                             <button id="exportExcelButton" onclick="exportPlanningMatrixToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -506,7 +394,6 @@
                             </button>
                         </div>
                         
-                        <!-- Ikon Silang (X) di pojok kanan atas -->
                         <button onclick="closePlanningTable()" class="text-gray-500 hover:text-red-600 p-1 rounded-full transition duration-150" title="Tutup Jadwal">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -514,7 +401,6 @@
                         </button>
                     </div>
                     <table class="min-w-full bg-white border border-gray-200" id="planningActualTable">
-                        <!-- Konten tabel diisi oleh JS -->
                     </table>
                 </div>
                 <p class="text-gray-500 p-4 bg-white" id="planningTablePlaceholder">Silakan masukkan Tanggal Mulai dan Tanggal Akhir untuk menampilkan Matriks Jadwal.</p>
@@ -525,20 +411,15 @@
             </p>
         </div>
 
-        <!-- ============================================== -->
         <!-- VIEW 3: DATA MASTER -->
-        <!-- ============================================== -->
         <div id="masterView" class="view-content hidden">
-            <!-- Tabel Data Laju Produksi Asumsi -->
             <div id="masterTableContainer">
                 <div class="mt-10 pt-4 border-t border-gray-200">
                     <h2 class="text-xl font-semibold text-gray-800 mb-3">
                         Data Master Produksi Tersimpan
-                        <!-- BARU: Span untuk menampilkan jumlah total -->
                         <span id="masterDataTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
                     </h2>
 
-                    <!-- BARU: Search Input Field -->
                     <div class="mb-4 relative">
                         <input type="text" id="masterSearchInput" placeholder="Cari Kode, Nama Komponen, atau Mesin..."
                                class="w-full p-2 pl-10 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm">
@@ -547,27 +428,19 @@
                         </svg>
                     </div>
 
-                    <!-- PENTING: Tambahkan wrapper overflow-x-auto pada tabel master agar responsif di mobile -->
-                    <!-- PERBAIKAN: Menambahkan max-h-[60vh] (60% tinggi layar) dan overflow-y-auto -->
                     <div id="rateTableContainer" class="overflow-x-auto rounded-lg shadow-md max-h-[60vh] overflow-y-auto">
-                        <!-- Tabel akan diisi oleh JavaScript -->
                     </div>
                     <p class="text-xs text-gray-500 mt-2">
                         *Asumsi: 1 Hari = 3 Shift, 1 Shift = 8 Jam. Perhitungan waktu didasarkan pada target pcs per shift.
                     </p>
                 </div>
 
-                <!-- BARU: CONTAINER UNTUK TABEL JADWAL MASTER -->
-                <!-- PERBAIKAN: Direstrukturisasi untuk memisahkan Search Bar dari Konten Tabel -->
                 <div id="scheduleMasterSection" class="mt-10 pt-4 border-t border-gray-200">
-                    <!-- BARU: Flex container for title and button -->
                     <div class="flex justify-between items-center mb-3">
                         <h2 class="text-xl font-semibold text-gray-800">
                             Data Master Jadwal Mesin Tersimpan
-                            <!-- BARU: Span untuk menampilkan jumlah total slot -->
                             <span id="scheduleMasterTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
                         </h2>
-                        <!-- BARU: Tombol Export Excel untuk Master Jadwal -->
                         <button id="exportMasterScheduleButton" onclick="exportMasterScheduleToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -576,7 +449,6 @@
                         </button>
                     </div>
 
-                    <!-- Filter Pencarian untuk Tabel Jadwal (PINDAH KE SINI) -->
                     <div class="mb-4 relative">
                         <input type="text" id="scheduleMasterSearchInput"
                                placeholder="Cari Mesin, Kode, Nama, atau Shift (mis: '1' atau 'Shift 1')..."
@@ -587,7 +459,6 @@
                         </svg>
                     </div>
                     
-                    <!-- BARU: Tombol Hapus Terpilih (Hanya Admin) -->
                     <div id="deleteSelectedScheduleContainer" class="mb-4 hidden">
                         <button onclick="confirmDeleteSelectedSchedules()"
                                 class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 shadow-md text-sm">
@@ -595,9 +466,7 @@
                         </button>
                     </div>
 
-                    <!-- CONTAINER BARU HANYA UNTUK TABELNYA -->
                     <div id="scheduleMasterContainer">
-                        <!-- Tabel Jadwal Master akan diisi oleh JavaScript -->
                     </div>
                 </div>
             </div>
@@ -606,6 +475,23 @@
     <!-- ============================================== -->
     <!-- MODAL (POP-UP) SECTION -->
     <!-- ============================================== -->
+
+    <!-- BARU: Modal (Popup) Konfirmasi Hari Libur -->
+    <div id="weekendConfirmModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
+            <h3 class="text-xl font-bold mb-4 text-orange-600 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Konfirmasi Hari Libur
+            </h3>
+            <p class="text-gray-700 mb-4">Tanggal <span id="weekendConfirmDate" class="font-bold"></span> adalah hari libur (Akhir Pekan). Apakah Anda yakin ingin menjadwalkan produksi di hari ini?</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="toggleWeekendConfirmModal(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
+                <button type="button" onclick="handleWeekendConfirm()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-150 shadow-md">Ya, Tetap Jadwalkan</button>
+            </div>
+        </div>
+    </div>
 
     <!-- BARU: Modal (Popup) Edit Slot Jadwal -->
     <div id="scheduleEditModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
@@ -619,7 +505,6 @@
                 <div>
                     <label for="modalScheduleMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
                     <select id="modalScheduleMachine" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-sm" onchange="checkSlotAvailability_Modal()">
-                        <!-- Opsi akan diisi oleh JavaScript, sama seperti form utama -->
                     </select>
                 </div>
 
@@ -649,10 +534,8 @@
                      </select>
                 </div>
 
-                <!-- Pesan Status Slot (Khusus Modal) -->
                 <p id="modalSlotStatusMessage" class="sm:col-span-2 text-sm font-bold mt-2 text-center"></p>
 
-                <!-- Tombol Aksi Modal -->
                 <div class="sm:col-span-2 flex justify-end space-x-3 mt-4">
                     <button type="button" onclick="toggleScheduleEditModal(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-150">
@@ -667,7 +550,6 @@
     </div>
 
 
-    <!-- MODAL BARU: Konfirmasi Hapus Multi Slot Jadwal -->
     <div id="scheduleMultiDeleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
             <h3 class="text-xl font-bold mb-4 text-red-700">Konfirmasi Hapus Multi Slot</h3>
@@ -679,7 +561,6 @@
         </div>
     </div>
 
-    <!-- Modal (Popup) Login Admin -->
     <div id="loginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
         <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-sm">
             <h3 class="text-xl font-bold mb-4 text-indigo-700">Login Administrator</h3>
@@ -688,20 +569,15 @@
                 <input type="password" id="adminPasswordInput" placeholder="Kata Sandi" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 mb-4 shadow-sm" required>
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="toggleAdminLogin()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
-                    <!-- Tombol Login (Warna Biru/Indigo) -->
                     <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-150">Login</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- BARU: Message Box (Kotak Pesan) Global -->
-    <!-- Elemen ini digunakan oleh fungsi showMessage() untuk menampilkan notifikasi -->
     <div id="messageBox" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 p-3 rounded-lg shadow-xl transition-opacity duration-300 z-[100] text-white">
-        <!-- Konten diisi oleh JavaScript -->
     </div>
     
-    <!-- BARU: Modal (Popup) Konfirmasi Logout Admin -->
     <div id="logoutModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
             <h3 class="text-xl font-bold mb-4 text-red-700">Konfirmasi Logout</h3>
@@ -713,7 +589,6 @@
         </div>
     </div>
 
-    <!-- BARU: Modal (Popup) Konfirmasi Hapus Data Master -->
     <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
             <h3 class="text-xl font-bold mb-4 text-red-700">Konfirmasi Hapus Data</h3>
@@ -727,7 +602,6 @@
         </div>
     </div>
 
-    <!-- BARU: Modal (Popup) Konfirmasi Hapus Slot Jadwal (SINGLE) -->
     <div id="scheduleDeleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
         <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
             <h3 class="text-xl font-bold mb-4 text-red-700">Konfirmasi Hapus Slot</h3>
@@ -740,26 +614,22 @@
         </div>
     </div>
     
-    <!-- DIHAPUS: Modal (Popup) Konfirmasi Jadwal Hari Libur -->
-    <!-- <div id="weekendConfirmModal" class="hidden fixed inset-0 z-50 ..."> ... </div> -->
-
 
     <script>
-        // --- KONFIGURASI SUPABASE ---
-        // KREDENSIAL TELAH DIPERBARUI BERDASARKAN INPUT PENGGUNA
         const SUPABASE_URL = 'https://adxpkzebtvetcnhngjax.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHBremVidHZldGNuaG5namF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDEzMTEsImV4cCI6MjA3NjUxNzMxMX0.c8pMAL7jAJFJmKFh8hcjI8_pIiW_pHZrenHT8nbUdoA';
         const TABLE_NAME = 'production_rates';
-        const SCHEDULE_TABLE_NAME = 'production_schedule'; // BARU: Nama tabel untuk Jadwal
+        const SCHEDULE_TABLE_NAME = 'production_schedule';
 
         let supabase;
         let productionData = {};
-        let scheduleData = {}; // BARU: Menyimpan data jadwal yang sudah ada
-        let masterScheduleData = []; // BARU: Menyimpan semua data jadwal untuk Master Table
-        let selectedScheduleIds = new Set(); // BARU: Untuk checkbox
-        let isSyncingScroll = false; // BARU: Flag untuk sinkronisasi scroll
+        let scheduleData = {};
+        let masterScheduleData = [];
+        let selectedScheduleIds = new Set();
+        let isSyncingScroll = false;
+        
+        let pendingWeekendAction = null; 
 
-        // Data Mesin Statis (Dari input user)
         const STATIC_MACHINE_DATA = [
             { code: 'A01', type: 'HC -450 T' }, { code: 'A02', type: 'HC -450 T' }, { code: 'A03', type: 'CF -600 T' },
             { code: 'A04', type: 'BORC -400 T' }, { code: 'A05', type: 'BORC -400 T' }, { code: 'A06', type: 'BORC -400 T' },
@@ -788,18 +658,14 @@
         ];
 
 
-        // KONSTANTA APLIKASI
         const HOURS_PER_SHIFT = 8;
         const SHIFTS_PER_DAY = 3;
 
-        // KONSTANTA ADMIN (Kata sandi sederhana)
         const ADMIN_PASSWORD = "admin123";
         let isLoggedIn = false;
 
-        // Variabel Global untuk menyimpan data estimasi yang siap dijadwalkan
         let pendingScheduleComponents = [];
 
-        // --- Fungsi Helper untuk membersihkan input text menjadi integer ---
         const cleanInt = (str) => {
             if (typeof str === 'number') return str;
             if (typeof str !== 'string') return 0;
@@ -807,32 +673,22 @@
             return parseInt(cleaned) || 0;
         };
 
-        // Mengubah Jam Desimal menjadi "X Jam Y Menit"
         function formatHoursMinutes(decimalHours) {
             if (decimalHours < 0) return '0 Jam 0 Menit';
-
-            // Ambil bagian jam (bilangan bulat)
             const hours = Math.floor(decimalHours);
-
-            // Ambil bagian desimal dan konversi ke menit (satu jam = 60 menit)
             const decimalPart = decimalHours - hours;
             const minutes = Math.round(decimalPart * 60);
-
             return `${hours} Jam ${minutes} Menit`;
         }
 
-        // BARU: Fungsi helper untuk mencari hari kerja berikutnya (termasuk hari ini)
-        // Mengembalikan Objek Date yang sudah divalidasi
         function getNextWorkday(date) {
             let currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            // Loop: Jika hari ini Minggu (0) or Sabtu (6)
             while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-                currentDate.setDate(currentDate.getDate() + 1); // Lanjut ke hari berikutnya
+                currentDate.setDate(currentDate.getDate() + 1);
             }
             return currentDate;
         }
 
-        // BARU: Fungsi untuk mengubah Objek Date ke string YYYY-MM-DD (Aman Timezone Lokal)
         function formatDateToYMD(date) {
              if (!(date instanceof Date) || isNaN(date)) return '';
              const y = date.getFullYear();
@@ -841,12 +697,10 @@
              return `${y}-${m}-${d}`;
         }
 
-        // **FUNGSI BARU**: Mengatur Tampilan (View)
         window.showView = function(viewName) {
             const views = ['estimation', 'planning', 'master'];
             const description = document.getElementById('viewDescription');
 
-            // Ambil elemen yang relevan
             const adminPanel = document.getElementById('adminPanel');
             const estimationFormContainer = document.getElementById('estimationFormContainer');
             const resultsContainer = document.getElementById('results');
@@ -865,93 +719,74 @@
             document.getElementById(`${viewName}View`).classList.remove('hidden');
             document.getElementById(`tab${viewName.charAt(0).toUpperCase() + viewName.slice(1)}`).classList.add('tab-active');
 
-            // Atur default visibility for elemen global
             adminPanel.classList.add('hidden');
             estimationFormContainer.classList.add('hidden');
             resultsContainer.classList.add('hidden');
             masterTableContainer.classList.add('hidden');
-            scheduleInputForm.classList.remove('visible'); // Sembunyikan form jadwal secara default
+            scheduleInputForm.classList.remove('visible');
             scheduleInputForm.classList.add('hidden');
 
-            // Reset form jadwal setiap kali pindah view
             cancelScheduleEdit();
 
-            // LOGIKA VISIBILITAS BERDASARKAN VIEW DAN STATUS LOGIN
             if (viewName === 'estimation') {
                  description.textContent = 'Hitung estimasi produksi.';
 
                  if (isLoggedIn) {
-                     // Jika Admin login, tampilkan Formulir Data Produksi Baru di Estimasi View
                      adminPanel.classList.remove('hidden');
-                     // BARU: Admin juga harus bisa menghitung estimasi
                      estimationFormContainer.classList.remove('hidden');
                  } else {
-                     // Pengguna Biasa
-                     estimationFormContainer.classList.remove('hidden'); // Tampilkan form Estimasi
-                     // results tetap hidden sampai dihitung
+                     estimationFormContainer.classList.remove('hidden');
                  }
 
             } else if (viewName === 'planning') {
                  description.textContent = 'Lihat perencanaan dan total kapasitas mesin berdasarkan data master.';
 
-                 // Form Periode Tanggal SELALU terlihat di Planning View
                  document.getElementById('planningForm').style.display = 'grid';
 
                  if (isLoggedIn) {
-                    // BARU: Tampilkan formulir input jadwal admin di Planning View
                     scheduleInputForm.classList.remove('hidden');
                     scheduleInputForm.classList.add('visible');
-                    // Panggil checkSlotAvailability() saat form muncul, untuk membersihkan status
-                    checkSlotAvailability(null); // Panggil dengan productData null
+                    checkSlotAvailability(null);
                  }
 
             } else if (viewName === 'master') {
                  description.textContent = 'Kelola data master target dan kapasitas produksi.';
 
-                 masterTableContainer.classList.remove('hidden'); // Tabel selalu terlihat di Master View
-                 renderRateTable(); // Render tabel Rates
+                 masterTableContainer.classList.remove('hidden');
+                 renderRateTable();
                  
-                 // BARU: Reset multi-select saat pindah tab
                  selectedScheduleIds.clear();
                  updateDeleteSelectedButtonState();
 
-                 // PERBAIKAN: Panggil fetchAllScheduleData DI SINI, lalu render
                  fetchAllScheduleData().then(() => {
-                     // BARU: Kosongkan search input saat tab dibuka
                      document.getElementById('scheduleMasterSearchInput').value = ''; 
-                     renderScheduleMasterTable(); // Render tabel Jadwal Master (tanpa query)
+                     renderScheduleMasterTable();
                  });
 
-                 // Formulir Input Data Produksi Baru di Data Master di HIDE
                  if (isLoggedIn) {
-                     adminPanel.classList.add('hidden'); // Disembunyikan (Hanya tampil di Estimasi View)
+                     adminPanel.classList.add('hidden');
                  }
             }
         }
 
-        // **FUNGSI BARU**: Mengelompokkan Data Master berdasarkan Mesin Utama
         function groupProductionDataByMachine() {
             const machineData = {};
 
-            // 1. Ambil data mesin statis dan buat dasarnya
             STATIC_MACHINE_DATA.forEach(staticMachine => {
                 const code = staticMachine.code ? staticMachine.code.trim() : null;
                 if (code) {
                     machineData[code] = {
                         machineCode: code,
                         type: staticMachine.type || 'N/A',
-                        products: [] // Menampung semua produk yang berjalan di mesin ini
+                        products: []
                     };
                 }
             });
 
-            // 2. Gabungkan dengan data produksi (rates)
             Object.values(productionData).forEach(item => {
                 const machineCode = item.machine ? item.machine.trim() : null;
 
-                // Pastikan item memiliki code dan name, dan machineCode ada di STATIC_MACHINE_DATA
                 if (machineCode && item.code && item.name && machineData[machineCode]) {
-                    // Cek duplikasi sebelum push
                     const isDuplicate = machineData[machineCode].products.some(p => p.code === item.code);
                     if (!isDuplicate) {
                          machineData[machineCode].products.push({ code: item.code, name: item.name });
@@ -959,14 +794,11 @@
                 }
             });
 
-            // 3. Filter dan Urutkan
             return Object.values(machineData)
                 .sort((a, b) => a.machineCode.localeCompare(b.machineCode));
         }
 
-        // **FUNGSI BARU**: Mengisi Dropdown Mesin Utama
         function populateMachineDropdowns() {
-            // PERUBAHAN: Mengisi kedua dropdown (form utama dan modal edit)
             const selects = [
                 document.getElementById('inputScheduleMachine'),
                 document.getElementById('modalScheduleMachine') 
@@ -977,37 +809,31 @@
             const placeholderDefault = '<option value="" disabled selected>Pilih Mesin</option>';
 
             selects.forEach(select => {
-                if (!select) return; // Antisipasi jika elemen tidak ada
+                if (!select) return;
                 
-                // Kosongkan opsi lama
                 select.innerHTML = (groupedMachines.length === 0) ? placeholderEmpty : placeholderDefault;
                 if (groupedMachines.length === 0) return;
 
-                // Hanya tampilkan mesin unik dari data statis
                 groupedMachines.forEach(machine => {
                     const option = document.createElement('option');
                     option.value = machine.machineCode;
                     option.textContent = `${machine.machineCode} (${machine.type || 'N/A'})`;
-                    select.appendChild(option.cloneNode(true)); // Clone untuk modal
+                    select.appendChild(option.cloneNode(true));
                 });
             });
         }
 
 
-        // **FUNGSI BARU**: Menyimpan Slot Jadwal Baru (HANYA INSERT)
-        // PERUBAHAN: Logika "Update" (if (existingId)) DIHAPUS. Fungsi ini sekarang HANYA untuk INSERT.
         async function saveScheduleSlot(forceWeekend = false) {
             if (!isLoggedIn) {
                 showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menjadwalkan.", "error");
                 return;
             }
             
-            // Membaca dari form input ATAS
             const machineDropdown = document.getElementById('inputScheduleMachine');
             const dateStr = document.getElementById('inputScheduleDate').value;
             const shift = document.getElementById('inputScheduleShift').value;
             const code = document.getElementById('inputScheduleCode').value.trim();
-            // const currentId = document.getElementById('inputScheduleId').value; // DIHAPUS
 
             if (!machineDropdown.value || !dateStr || !shift || !code) {
                  showMessage("Mesin Utama, Tanggal, Shift, dan Kode Barang wajib diisi.", "error");
@@ -1020,29 +846,15 @@
                  return;
             }
 
-            // --- PERBAIKAN LOGIKA: Otomatis loncat ke hari kerja (Senin-Jumat) ---
-            // 1. Dapatkan tanggal hari kerja
-            const workdayDate = getNextWorkday(parsedDate);
-            let finalDateStr = dateStr;
+            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
             
-            // 2. Cek apakah tanggalnya berubah (artinya kita loncat)
-            if (workdayDate.getDate() !== parsedDate.getDate()) {
-                finalDateStr = formatDateToDMY(workdayDate); // Format baru DD/MM/YYYY
-                document.getElementById('inputScheduleDate').value = finalDateStr; // Update UI
-                
-                // Tunda pesan notifikasi sedikit agar tidak tertimpa pesan lain
-                setTimeout(() => {
-                    showMessage(`Tanggal ${dateStr} adalah hari libur. Otomatis dipindahkan ke ${finalDateStr}.`, "info");
-                }, 100);
+            if (isWeekend && !forceWeekend) {
+                toggleWeekendConfirmModal(true, 'save', dateStr);
+                return;
             }
-            
-            // 3. Gunakan workdayDate untuk database
-            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
-            const dbDate = formatDateToYMD(workdayDate);
-            // --- AKHIR PERBAIKAN ---
 
+            const dbDate = formatDateToYMD(parsedDate);
 
-            // Pengecekan Ketersediaan Slot
             const productDataForCheck = Object.values(productionData).find(p => p.code === code);
             await checkSlotAvailability(productDataForCheck); 
             
@@ -1050,34 +862,13 @@
             const finalKey = `${finalMachineToSave}|${dbDate}|${shift}`;
             const finalScheduleItem = scheduleData[finalKey];
 
-            // Cek jika slot akhir PENUH
-            // PERUBAHAN: Pengecekan currentId dihapus, karena ini HANYA insert.
             if (finalScheduleItem) {
                  showMessage(`SLOT PENUH (Mesin ${finalMachineToSave}). Gagal menyimpan.`, "error");
                  return;
             }
-
-            // Cek jika slot akhir PENUH
-            // PERUBAHAN: Pengecekan currentId dihapus, karena ini HANYA insert.
-            if (finalScheduleItem) {
-                 showMessage(`SLOT PENUH (Mesin ${finalMachineToSave}). Gagal menyimpan.`, "error");
-                 return;
-            }
-
-            // DIHAPUS: Pengecekan hari libur dan modal konfirmasi
-            /*
-            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
-            if (isWeekend && !forceWeekend) {
-                ...
-                toggleWeekendConfirmModal(true);
-                return; 
-            }
-            */
-
 
             const dataToSave = {
                 mesin: finalMachineToSave, 
-                // PERBAIKAN TIMEZONE: Menggunakan dbDate yang sudah diformat YMD
                 schedule_date: dbDate, 
                 schedule_shift: shift,
                 product_code: code,
@@ -1086,7 +877,6 @@
             };
 
             try {
-                // HANYA Logika INSERT
                 const { error } = await supabase
                     .from(SCHEDULE_TABLE_NAME)
                     .insert([dataToSave])
@@ -1096,21 +886,16 @@
 
                 showMessage(`Slot ${code} untuk Mesin ${finalMachineToSave} Shift ${shift.split(' ')[1]} pada ${dateStr} berhasil disimpan!`, "info");
 
-                cancelScheduleEdit(); // Reset form dan tombol
+                cancelScheduleEdit();
 
-                // --- PERBAIKAN SINKRONISASI ---
                 const start = document.getElementById('startDate').value;
                 const end = document.getElementById('endDate').value;
                 
-                // 1. Ambil data master terbaru
                 await fetchAllScheduleData(); 
-                // 2. Render ulang tabel master (jika pengguna pindah tab)
                 renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
-                // 3. Render ulang tabel perencanaan saat ini
                 if (start && end) {
                     renderPlanningTable(start, end);
                 }
-                // --- AKHIR PERBAIKAN ---
 
             } catch (e) {
                 console.error("Error saving schedule slot:", e);
@@ -1124,19 +909,17 @@
             }
         }
 
-        // **FUNGSI BARU**: Update Slot Jadwal dari MODAL (HANYA UPDATE)
         async function updateScheduleSlotFromModal(forceWeekend = false) {
             if (!isLoggedIn) {
                 showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menjadwalan.", "error");
                 return;
             }
             
-            // Membaca dari form MODAL
             const machineDropdown = document.getElementById('modalScheduleMachine');
             const dateStr = document.getElementById('modalScheduleDate').value;
             const shift = document.getElementById('modalScheduleShift').value;
             const code = document.getElementById('modalScheduleCode').value.trim();
-            const currentId = document.getElementById('modalScheduleId').value; // ID dari modal
+            const currentId = document.getElementById('modalScheduleId').value;
 
             if (!machineDropdown.value || !dateStr || !shift || !code || !currentId) {
                  showMessage("Data tidak lengkap. Gagal mengupdate.", "error");
@@ -1149,28 +932,15 @@
                  return;
             }
 
-            // --- PERBAIKAN LOGIKA: Otomatis loncat ke hari kerja (Senin-Jumat) ---
-            // 1. Dapatkan tanggal hari kerja
-            const workdayDate = getNextWorkday(parsedDate);
-            let finalDateStr = dateStr;
+            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6); 
             
-            // 2. Cek apakah tanggalnya berubah (artinya kita loncat)
-            if (workdayDate.getDate() !== parsedDate.getDate()) {
-                finalDateStr = formatDateToDMY(workdayDate); // Format baru DD/MM/YYYY
-                document.getElementById('modalScheduleDate').value = finalDateStr; // Update UI modal
-                
-                // Tunda pesan notifikasi sedikit agar tidak tertimpa pesan lain
-                setTimeout(() => {
-                    showMessage(`Tanggal ${dateStr} adalah hari libur. Otomatis dipindahkan ke ${finalDateStr}.`, "info");
-                }, 100);
+            if (isWeekend && !forceWeekend) {
+                toggleWeekendConfirmModal(true, 'update', dateStr);
+                return; 
             }
-            
-            // 3. Gunakan workdayDate untuk database
-            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
-            const dbDate = formatDateToYMD(workdayDate);
-            // --- AKHIR PERBAIKAN ---
 
-            // Pengecekan Ketersediaan Slot (menggunakan fungsi modal)
+            const dbDate = formatDateToYMD(parsedDate);
+
             const productDataForCheck = Object.values(productionData).find(p => p.code === code);
             await checkSlotAvailability_Modal(productDataForCheck); 
             
@@ -1178,26 +948,13 @@
             const finalKey = `${finalMachineToSave}|${dbDate}|${shift}`;
             const finalScheduleItem = scheduleData[finalKey];
 
-            // Cek jika slot akhir PENUH dan BUKAN mode edit slot itu
             if (finalScheduleItem && finalScheduleItem.id != currentId) {
                  showMessage(`SLOT PENUH (Mesin ${finalMachineToSave}). Gagal mengupdate.`, "error");
                  return;
             }
 
-            // Cek jika hari libur dan belum di-force
-            // DIHAPUS: Pengecekan hari libur dan modal konfirmasi
-            /*
-            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
-            if (isWeekend && !forceWeekend) {
-                ...
-                toggleWeekendConfirmModal(true);
-                return; 
-            }
-            */
-
             const dataToSave = {
                 mesin: finalMachineToSave, 
-                // PERBAIKAN TIMEZONE: Menggunakan dbDate yang sudah diformat YMD
                 schedule_date: dbDate, 
                 schedule_shift: shift,
                 product_code: code,
@@ -1206,7 +963,6 @@
             };
 
             try {
-                // HANYA Logika UPDATE
                 const { error } = await supabase
                     .from(SCHEDULE_TABLE_NAME)
                     .update(dataToSave)
@@ -1217,21 +973,16 @@
 
                 showMessage(`Slot ${code} untuk Mesin ${finalMachineToSave} Shift ${shift.split(' ')[1]} pada ${dateStr} berhasil diperbarui!`, "info");
 
-                toggleScheduleEditModal(false); // Tutup modal
+                toggleScheduleEditModal(false);
 
-                // --- PERBAIKAN SINKRONISASI ---
                 const start = document.getElementById('startDate').value;
                 const end = document.getElementById('endDate').value;
 
-                // 1. Ambil data master terbaru
                 await fetchAllScheduleData();
-                // 2. Render ulang tabel master (jika pengguna pindah tab)
                 renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
-                // 3. Render ulang tabel perencanaan saat ini
                 if (start && end) {
                     renderPlanningTable(start, end);
                 }
-                // --- AKHIR PERBAIKAN ---
 
             } catch (e) {
                 console.error("Error updating schedule slot:", e);
@@ -1243,8 +994,32 @@
             }
         }
 
+        window.toggleWeekendConfirmModal = function(show, action = null, dateStr = '') {
+            const modal = document.getElementById('weekendConfirmModal');
+            modal.classList.toggle('hidden', !show);
+            
+            if (show && dateStr) {
+                document.getElementById('weekendConfirmDate').textContent = dateStr;
+            }
+            
+            if (action) {
+                pendingWeekendAction = action;
+            }
+        }
 
-        // **FUNGSI BARU**: Mempersiapkan Konfirmasi Hapus Slot Jadwal
+        window.handleWeekendConfirm = function() {
+            toggleWeekendConfirmModal(false);
+            
+            if (pendingWeekendAction === 'save') {
+                saveScheduleSlot(true);
+            } else if (pendingWeekendAction === 'update') {
+                updateScheduleSlotFromModal(true);
+            }
+            
+            pendingWeekendAction = null;
+        }
+
+
         window.prepareScheduleDelete = function(id, code, date, shift) {
              if (!isLoggedIn) {
                 showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
@@ -1256,8 +1031,6 @@
             toggleScheduleDeleteModal(true);
         }
 
-        <!-- PERBAIKAN: Mengganti fungsi window.confirmScheduleDelete yang rusak -->
-        // **FUNGSI BARU**: Menjalankan Penghapusan Slot Jadwal
         window.confirmScheduleDelete = async function() {
             const idToDelete = document.getElementById('deleteScheduleIdConfirm').value;
             toggleScheduleDeleteModal(false);
@@ -1273,19 +1046,14 @@
 
                     showMessage("Slot jadwal berhasil dihapus!", "info");
 
-                    // --- PERBAIKAN SINKRONISASI (Mengganti logika lama) ---
                     const start = document.getElementById('startDate').value;
                     const end = document.getElementById('endDate').value;
 
-                    // 1. Ambil data master terbaru
                     await fetchAllScheduleData();
-                    // 2. Render ulang tabel master (penting jika dihapus dari tab master)
                     renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
-                    // 3. Render ulang tabel perencanaan saat ini (penting jika dihapus dari tab perencanaan)
                     if (start && end) {
                         renderPlanningTable(start, end);
                     }
-                    // --- AKHIR PERBAIKAN ---
 
                 } catch (e) {
                     console.error("Error deleting schedule slot:", e);
@@ -1294,84 +1062,45 @@
             }
         }
 
-        // DIHAPUS: Fungsi konfirmasi hari libur tidak diperlukan lagi
-        /*
-        // BARU: Konfirmasi untuk menyimpan di hari libur (dari form ATAS)
-        window.confirmWeekendSave = function() {
-            toggleWeekendConfirmModal(false); 
-            saveScheduleSlot(true); // Panggil save (insert)
-        }
-
-        // BARU: Konfirmasi untuk menyimpan di hari libur (dari MODAL)
-        window.confirmWeekendSave_Modal = function() {
-            toggleWeekendConfirmModal(false); 
-            updateScheduleSlotFromModal(true); // Panggil update
-        }
-        */
-
-        // Toggle Modal Delete Jadwal
         window.toggleScheduleDeleteModal = function(show) {
             document.getElementById('scheduleDeleteModal').classList.toggle('hidden', !show);
         }
-
-        // DIHAPUS: Toggle modal hari libur
-        /*
-        // BARU: Toggle Modal Konfirmasi Hari Libur
-        window.toggleWeekendConfirmModal = function(show) {
-            document.getElementById('weekendConfirmModal').classList.toggle('hidden', !show);
-        }
-        */
         
-        // BARU: Toggle Modal Edit Jadwal
         window.toggleScheduleEditModal = function(show) {
             document.getElementById('scheduleEditModal').classList.toggle('hidden', !show);
         }
 
 
-        // **FUNGSI BARU**: Memuat Data Slot ke Formulir Edit (MODAL)
-        // PERUBAHAN: Fungsi ini sekarang membuka MODAL
         window.startScheduleEdit = function(scheduleItem) {
              if (!isLoggedIn) {
                 showMessage("Anda harus Login Admin untuk mengedit jadwal.", "error");
                 return;
             }
 
-            // Konversi tanggal DB (YYYY-MM-DD) ke DD/MM/YYYY untuk input mask
             const parts = scheduleItem.schedule_date.split('-');
             const displayDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
 
-            // Mengisi form MODAL
             document.getElementById('modalScheduleId').value = scheduleItem.id;
             document.getElementById('modalScheduleMachine').value = scheduleItem.mesin;
             document.getElementById('modalScheduleDate').value = displayDate;
             document.getElementById('modalScheduleShift').value = scheduleItem.schedule_shift;
             document.getElementById('modalScheduleCode').value = scheduleItem.product_code;
 
-            // Panggil fungsi find-name versi MODAL
             findProductNameByCode_Modal();
 
-            // Set dropdown ke nilai yang tersimpan di database
             setTimeout(() => {
                 const nameDropdown = document.getElementById('modalScheduleName');
                 nameDropdown.value = scheduleItem.product_name;
 
-                // Panggil handle change versi MODAL
                 if (nameDropdown.value) { 
                     handleComponentSelectionChange_Modal();
                 }
             }, 100);
 
-            // Tampilkan Modal
             toggleScheduleEditModal(true);
-            
-            // Hapus scroll ke atas dan perpindahan view
-            // window.scrollTo({ top: 0, behavior: 'smooth' }); // DIHAPUS
-            // showView('planning'); // DIHAPUS
         }
 
-        // **FUNGSI BARU**: Membatalkan Edit Jadwal (Hanya mereset form ATAS)
         window.cancelScheduleEdit = function() {
-            // document.getElementById('inputScheduleId').value = ''; // DIHAPUS
             document.getElementById('inputScheduleCode').value = '';
             document.getElementById('inputScheduleDate').value = ''; 
             
@@ -1381,28 +1110,20 @@
             document.getElementById('inputScheduleMachine').value = ''; 
             document.getElementById('inputScheduleShift').value = 'Shift 1';
 
-            // Tombol di form ATAS tidak perlu diubah, karena sudah tidak ada mode edit di sana
-            // const submitButton = document.getElementById('scheduleSubmitButton');
-            // ... (Logika tombol update DIHAPUS)
-
-            // document.getElementById('scheduleCancelButton').classList.add('hidden'); // DIHAPUS
-
             checkSlotAvailability(null); 
         }
 
-        // **FUNGSI BARU**: Mencari Nama Produk berdasarkan Kode (Form ATAS)
         window.findProductNameByCode = function() {
             const codeInput = document.getElementById('inputScheduleCode');
             const nameDropdown = document.getElementById('inputScheduleName'); 
             const machineDropdown = document.getElementById('inputScheduleMachine');
             const code = codeInput.value.trim().toUpperCase();
-            // const currentId = document.getElementById('inputScheduleId').value; // DIHAPUS
 
             nameDropdown.innerHTML = '';
 
             if (!code) {
                 nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
-                machineDropdown.value = ""; // Selalu reset mesin jika kode kosong
+                machineDropdown.value = "";
                 checkSlotAvailability(null);
                 return;
             }
@@ -1421,10 +1142,9 @@
                     nameDropdown.appendChild(option);
                 });
 
-                // Hanya auto-select jika HANYA ada 1 komponen
                 if (matchingProducts.length === 1) {
                     const product = matchingProducts[0];
-                    nameDropdown.value = product.name; // Pilih otomatis
+                    nameDropdown.value = product.name;
                     handleComponentSelectionChange();
                 }
 
@@ -1435,12 +1155,10 @@
             }
         }
 
-        // **FUNGSI BARU**: Dipanggil saat dropdown Nama Komponen berubah (Form ATAS)
         window.handleComponentSelectionChange = function() {
             const code = document.getElementById('inputScheduleCode').value.trim().toUpperCase();
             const componentName = document.getElementById('inputScheduleName').value;
             const machineDropdown = document.getElementById('inputScheduleMachine');
-            // const currentId = document.getElementById('inputScheduleId').value; // DIHAPUS
 
             if (!code || !componentName) {
                 checkSlotAvailability(null);
@@ -1464,23 +1182,17 @@
             checkSlotAvailability(product);
         }
 
-        // **FUNGSI BARU**: Cek Ketersediaan Slot (Form ATAS)
         window.checkSlotAvailability = async function(productData = null) {
             const messageEl = document.getElementById('slotStatusMessage');
-            // --- PERBAIKAN ERROR ---
-            // Cek apakah elemen pesan ada. Jika tidak (karena kita di tab lain),
-            // segera hentikan fungsi untuk menghindari error 'null'.
             if (!messageEl) {
                 return;
             }
-            // --- AKHIR PERBAIKAN ---
 
             const machineDropdown = document.getElementById('inputScheduleMachine');
             const dateStr = document.getElementById('inputScheduleDate').value;
             const shift = document.getElementById('inputScheduleShift').value;
             const codeInput = document.getElementById('inputScheduleCode');
             const code = codeInput.value.trim().toUpperCase();
-            // const currentId = document.getElementById('inputScheduleId').value; // DIHAPUS
 
             if (!isLoggedIn || !code || !dateStr || !shift) {
                 messageEl.textContent = ''; return;
@@ -1492,7 +1204,6 @@
                  messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
                  return;
             }
-            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
             const dbDate = formatDateToYMD(parsedDate);
 
             if (!productData) {
@@ -1541,7 +1252,6 @@
                  const key = `${machineToCheck}|${dbDate}|${shift}`;
                  const scheduleItem = scheduleData[key];
 
-                 // PERUBAHAN: Logika disederhanakan. Slot tersedia HANYA jika 'scheduleItem' null
                  if (!scheduleItem) {
                     const optionExists = Array.from(machineDropdown.options).some(opt => opt.value === machineToCheck);
                     if (optionExists) {
@@ -1558,7 +1268,6 @@
             }
 
             if (foundAvailableSlot && bestAvailableMachine) {
-                 // Skenario Auto-Hop (jika mesin yg dipilih beda dgn yg kosong)
                  if (machineDropdown.value !== bestAvailableMachine) {
                      machineDropdown.value = bestAvailableMachine; 
                      if (bestAvailableMachine === productData.machine) {
@@ -1593,21 +1302,17 @@
             messageEl.className = `text-sm font-bold mt-3 text-center ${messageColor}`;
         }
 
-        // --- (BARU) FUNGSI-FUNGSI UNTUK MODAL EDIT ---
-
-        // **FUNGSI BARU**: Mencari Nama Produk berdasarkan Kode (MODAL)
         window.findProductNameByCode_Modal = function() {
             const codeInput = document.getElementById('modalScheduleCode');
             const nameDropdown = document.getElementById('modalScheduleName'); 
             const machineDropdown = document.getElementById('modalScheduleMachine');
             const code = codeInput.value.trim().toUpperCase();
-            const currentId = document.getElementById('modalScheduleId').value; // Mode edit
+            const currentId = document.getElementById('modalScheduleId').value;
 
             nameDropdown.innerHTML = '';
 
             if (!code) {
                 nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
-                // JANGAN reset mesin di modal jika kode kosong, biarkan nilai lama
                 checkSlotAvailability_Modal(null);
                 return;
             }
@@ -1626,21 +1331,17 @@
                     nameDropdown.appendChild(option);
                 });
                 
-                // Saat mode edit, JANGAN auto-select. Biarkan `startScheduleEdit` yg mengaturnya.
-
             } else {
                 nameDropdown.innerHTML = '<option value="" disabled>Kode tidak ditemukan</option>';
-                // JANGAN reset mesin di modal
                 checkSlotAvailability_Modal(null);
             }
         }
 
-        // **FUNGSI BARU**: Dipanggil saat dropdown Nama Komponen berubah (MODAL)
         window.handleComponentSelectionChange_Modal = function() {
             const code = document.getElementById('modalScheduleCode').value.trim().toUpperCase();
             const componentName = document.getElementById('modalScheduleName').value;
             const machineDropdown = document.getElementById('modalScheduleMachine');
-            const currentId = document.getElementById('modalScheduleId').value; // Mode edit
+            const currentId = document.getElementById('modalScheduleId').value;
 
             if (!code || !componentName) {
                 checkSlotAvailability_Modal(null);
@@ -1649,30 +1350,21 @@
 
             const product = Object.values(productionData).find(p => p.code === code && p.name === componentName);
 
-            if (product) {
-                 // Di modal (mode edit), JANGAN auto-pilih mesin.
-                 // Biarkan user yg memilih jika ingin pindah mesin.
-                 // Pengecekan slot akan menangani validasinya.
-            }
             checkSlotAvailability_Modal(product);
         }
 
-        // **FUNGSI BARU**: Cek Ketersediaan Slot (MODAL)
         window.checkSlotAvailability_Modal = async function(productData = null) {
             const messageEl = document.getElementById('modalSlotStatusMessage');
-            // --- PERBAIKAN ERROR ---
-            // Cek apakah elemen pesan ada.
             if (!messageEl) {
                 return;
             }
-            // --- AKHIR PERBAIKAN ---
 
             const machineDropdown = document.getElementById('modalScheduleMachine');
             const dateStr = document.getElementById('modalScheduleDate').value;
             const shift = document.getElementById('modalScheduleShift').value;
             const codeInput = document.getElementById('modalScheduleCode');
             const code = codeInput.value.trim().toUpperCase();
-            const currentId = document.getElementById('modalScheduleId').value; // ID Edit
+            const currentId = document.getElementById('modalScheduleId').value;
 
             if (!isLoggedIn || !code || !dateStr || !shift) {
                 messageEl.textContent = ''; return;
@@ -1684,16 +1376,14 @@
                  messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
                  return;
             }
-            // PERBAIKAN TIMEZONE: Menggunakan formatDateToYMD
             const dbDate = formatDateToYMD(parsedDate);
 
             if (!productData) {
-                 // Cari produk berdasarkan KODE dan NAMA (karena dropdown mungkin sudah dipilih)
                  const componentName = document.getElementById('modalScheduleName').value;
                  if(componentName) {
                     productData = Object.values(productionData).find(p => p.code === code && p.name === componentName);
                  } else {
-                    productData = Object.values(productionData).find(p => p.code === code); // Fallback
+                    productData = Object.values(productionData).find(p => p.code === code);
                  }
             }
 
@@ -1737,15 +1427,12 @@
                  const key = `${machineToCheck}|${dbDate}|${shift}`;
                  const scheduleItem = scheduleData[key];
 
-                 // Logika Edit: Slot tersedia jika KOSONG atau JIKA ID-nya = ID yg kita edit
                  if (!scheduleItem || (currentId && scheduleItem.id == currentId)) {
                     const optionExists = Array.from(machineDropdown.options).some(opt => opt.value === machineToCheck);
                     if (optionExists) {
                         foundAvailableSlot = true;
                         bestAvailableMachine = machineToCheck;
                         
-                        // Jika slot yg dicek adalah mesin yg sedang dipilih di dropdown,
-                        // prioritaskan ini dan langsung break
                         if (machineToCheck === machineDropdown.value) {
                             break;
                         }
@@ -1757,15 +1444,12 @@
                  }
             }
 
-            // Validasi Logika di Modal
             if (foundAvailableSlot && bestAvailableMachine) {
-                // Cek apakah mesin yg dipilih di dropdown valid untuk produk ini
                 const selectedMachine = machineDropdown.value;
                 if (!machinesToCheck.includes(selectedMachine)) {
                      statusMessage = 'Mesin tidak valid untuk produk ini!';
                      messageColor = 'text-red-600';
                 } else {
-                     // Cek ketersediaan slot di mesin yg dipilih
                      const key = `${selectedMachine}|${dbDate}|${shift}`;
                      const scheduleItem = scheduleData[key];
                      if (!scheduleItem || (currentId && scheduleItem.id == currentId)) {
@@ -2974,8 +2658,9 @@
             });
 
             tableHTML += `
-                    </tbody>
-                </table>
+                        </tbody>
+                    </table>
+                </div>
             `;
             container.innerHTML = tableHTML;
 
