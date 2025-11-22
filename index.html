@@ -108,6 +108,15 @@
             cursor: grabbing;
             opacity: 0.5;
         }
+
+        /* Style untuk baris input produk dinamis */
+        .product-input-row {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen">
@@ -214,29 +223,37 @@
         <!-- VIEW 1: ESTIMASI PRODUKSI (DEFAULT) -->
         <div id="estimationView" class="view-content">
 
-            <div id="estimationFormContainer">
-                <div class="grid grid-cols-1 md:col-span-3 gap-6 mb-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
-                    <div>
-                        <label for="productCode" class="block text-sm font-medium text-gray-700 mb-1">Kode Produk (Ketik untuk Mencari)</label>
-                        <input type="text" id="productCode" placeholder="Masukkan Kode Barang" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm transition duration-150 ease-in-out" list="productCodeList" oninput="this.value = this.value.toUpperCase()">
-
-                        <datalist id="productCodeList">
-                        </datalist>
-
-                    </div>
-                    <div class="md:col-span-2">
-                        <label for="orderQty" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pesanan (Dus)</label>
-                        <input type="number" id="orderQty" placeholder="Contoh: 1500" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition duration-150 ease-in-out" min="1">
-                    </div>
-                    <div class="md:col-span-3 flex justify-center">
-                        <button onclick="calculateEstimation()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.01] shadow-lg shadow-indigo-500/50">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
-                            </svg>
-                            Hitung Estimasi Produksi
-                        </button>
-                    </div>
+            <div id="estimationFormContainer" class="mb-8 p-6 bg-indigo-50 rounded-lg border border-indigo-200">
+                <h3 class="text-lg font-semibold text-indigo-900 mb-4 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
+                    </svg>
+                    Daftar Pesanan
+                </h3>
+                
+                <div id="inputRowsContainer" class="space-y-4">
+                    <!-- Baris Input Akan Ditambahkan di Sini via JS -->
                 </div>
+
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-6 space-y-3 sm:space-y-0">
+                    <button onclick="addInputRow()" class="text-sm bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 font-semibold py-2 px-4 rounded-lg transition duration-300 shadow-sm flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Produk Lain
+                    </button>
+
+                    <button onclick="calculateEstimation()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.01] shadow-lg shadow-indigo-500/50 w-full sm:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
+                        </svg>
+                        Hitung Estimasi Produksi
+                    </button>
+                </div>
+                
+                <!-- Datalist (Dipindahkan keluar loop agar bisa direuse) -->
+                <datalist id="productCodeList">
+                </datalist>
             </div>
 
 
@@ -252,30 +269,39 @@
                     </button>
                 </div>
 
+                <!-- Container Area Print -->
                 <div id="estimationPrintArea">
+                    
+                    <!-- 1. RINGKASAN KARTU (Paling Atas) -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-
                         <div class="p-4 bg-indigo-100 rounded-lg shadow border border-indigo-200">
                             <h3 class="text-sm font-medium text-indigo-700">Total Jam Produksi</h3>
                             <p id="resultHours" class="text-2xl sm:text-3xl font-bold text-indigo-900 mt-1">--</p>
                         </div>
-                        
                         <div class="p-4 bg-blue-100 rounded-lg shadow border border-blue-200">
                             <h3 class="text-sm font-medium text-blue-700">Total Shift Produksi</h3>
                             <p id="resultShifts" class="text-2xl sm:text-3xl font-bold text-blue-900 mt-1">--</p>
                         </div>
-                        
                         <div class="p-4 bg-orange-100 rounded-lg shadow border border-orange-200">
                             <h3 class="text-sm font-medium text-orange-700">Total Hari Produksi</h3>
                             <p id="resultDays" class="text-2xl sm:text-3xl font-bold text-orange-900 mt-1">--</p>
                         </div>
                     </div>
-
-                    <div id="estimationDetails" class="mt-6 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 border border-gray-200 hidden">
-                    </div>
                     
-                    <div id="autoSchedulePanel" class="mt-8 p-6 bg-green-50 rounded-xl border border-green-200 hidden">
-                        <h3 class="text-lg font-bold text-green-800 mb-4">Penjadwalan Otomatis Berdasarkan Estimasi</h3>
+                    <!-- 2. RINCIAN DETAIL (Dikembalikan ke posisi tengah/setelah ringkasan) -->
+                    <div id="estimationDetails" class="p-4 bg-gray-50 rounded-lg text-sm text-gray-700 border border-gray-200 hidden">
+                    </div>
+
+                    <!-- 3. PENJADWALAN OTOMATIS (Dikembalikan ke posisi Bawah) -->
+                    <div id="autoSchedulePanel" class="mt-8 p-6 bg-green-50 rounded-xl border border-green-200 hidden shadow-sm">
+                        <div class="flex items-center mb-4 border-b border-green-200 pb-3">
+                            <div class="bg-green-100 p-2 rounded-full mr-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-green-800">Penjadwalan Otomatis Berdasarkan Estimasi</h3>
+                        </div>
                         
                         <div id="componentSelectionContainer" class="mt-4 mb-4 p-4 border border-green-200 rounded-lg bg-white hidden">
                             <h4 class="text-base font-semibold text-gray-700 mb-3">Pilih Komponen untuk Dijadwalkan:</h4>
@@ -300,9 +326,9 @@
                         <p id="autoScheduleStatus" class="text-xs text-green-700 mt-2 hidden">Hasil simulasi jadwal akan muncul di sini.</p>
                     </div>
                 </div>
+                <!-- Akhir Area Print -->
 
-
-                <div id="toggleDetailsContainer" class="flex justify-end mb-4">
+                <div id="toggleDetailsContainer" class="flex justify-end mb-4 mt-2">
                     <button id="toggleDetailsButton" onclick="toggleDetails()" class="text-sm text-gray-600 hover:text-indigo-600 font-medium transition duration-150 flex items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" id="toggleIcon">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
@@ -2371,6 +2397,64 @@
             }
 
             updateAutoScheduleButton();
+            
+            // Inisialisasi dengan 1 baris input
+            addInputRow();
+        }
+        
+        // === NEW: Dynamic Input Row Functions ===
+        window.addInputRow = function() {
+            const container = document.getElementById('inputRowsContainer');
+            const rowId = 'input-row-' + Date.now();
+            
+            const div = document.createElement('div');
+            div.id = rowId;
+            div.className = 'product-input-row grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 bg-white rounded-lg border border-indigo-100 shadow-sm';
+            
+            // Check if it's the first row to determine if delete button should be shown
+            const isFirstRow = container.children.length === 0;
+            
+            div.innerHTML = `
+                <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode Produk</label>
+                    <input type="text" class="product-code-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm uppercase-input" placeholder="Masukkan Kode Barang" list="productCodeList" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div class="md:col-span-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pesanan (Dus)</label>
+                    <input type="number" class="order-qty-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm" placeholder="Contoh: 1500" min="1">
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                    <button onclick="removeInputRow('${rowId}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition duration-150 ${isFirstRow ? 'hidden' : ''}" title="Hapus Baris">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(div);
+            
+            // Ensure delete buttons are managed correctly (first row shouldn't be deletable if it's the only one, but if we add more, logic handles it)
+            updateDeleteButtonsVisibility();
+        }
+
+        window.removeInputRow = function(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateDeleteButtonsVisibility();
+            }
+        }
+
+        function updateDeleteButtonsVisibility() {
+            const container = document.getElementById('inputRowsContainer');
+            const buttons = container.querySelectorAll('button');
+            
+            if (container.children.length === 1) {
+                buttons.forEach(btn => btn.classList.add('hidden'));
+            } else {
+                buttons.forEach(btn => btn.classList.remove('hidden'));
+            }
         }
 
         function updateAutoScheduleButton() {
@@ -2856,111 +2940,137 @@
         }
 
         window.calculateEstimation = function() {
-            const code = document.getElementById('productCode').value.trim();
-            const orderQtyInput = document.getElementById('orderQty').value;
-            const orderQtyDus = cleanInt(orderQtyInput);
+            const container = document.getElementById('inputRowsContainer');
+            const rows = container.querySelectorAll('.product-input-row');
             
             const componentSelectionPanel = document.getElementById('componentSelectionContainer');
             componentSelectionPanel.classList.add('hidden');
             document.getElementById('componentSelectionList').innerHTML = ''; 
 
-            if (!code) {
-                showMessage(`Mohon masukkan Kode Barang.`, "error");
-                document.getElementById('results').classList.add('hidden');
-                document.getElementById('autoSchedulePanel').classList.add('hidden'); 
-                return;
-            }
-
-            if (orderQtyDus <= 0) {
-                showMessage("Mohon masukkan Jumlah Pesanan yang valid (angka positif).", "error");
-                document.getElementById('results').classList.add('hidden');
-                document.getElementById('autoSchedulePanel').classList.add('hidden'); 
-                return;
-            }
-
-            const matchingProducts = Object.values(productionData).filter(data => data.code === code);
-
-            if (matchingProducts.length === 0) {
-                showMessage(`Kode Produk "${code}" tidak ditemukan dalam Data Master. Harap masukkan kode yang valid.`, "error");
-                document.getElementById('results').classList.add('hidden');
-                document.getElementById('autoSchedulePanel').classList.add('hidden'); 
-                return;
-            }
-
             const estimationMachineTracker = {}; 
             let longestShiftNet = 0; 
-
-            let componentDetailsHTML = '';
+            let combinedDetailsHTML = '';
             const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const integerFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
-
+            
             pendingScheduleComponents = []; 
-
-            componentDetailsHTML += `
-                <h4 class="text-lg font-semibold text-gray-800 mb-3 mt-4">Rincian Perhitungan per Komponen (${code}):</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm text-xs">
-                        <thead>
-                            <tr class="bg-gray-100 text-left text-gray-600 uppercase tracking-wider">
-                                <th class="py-2 px-3 border-b">Komponen/Mesin</th>
-                                <th class="py-2 px-3 border-b text-right">Isi Dus (pcs)</th>
-                                <th class="py-2 px-3 border-b text-right">CETAK PRODUKSI (PCS)</th>
-                                <th class="py-2 px-3 border-b text-right">Target Shift (pcs)</th>
-                                <th class="py-2 px-3 border-b text-right font-bold text-red-700">Kapasitas 3 Shift (pcs)</th>
-                                <th class="py-2 px-3 border-b text-right">Jam Yang Dibutuhkan</th>
-                                <th class="py-2 px-3 border-b text-right">Shift Yang Dibutuhkan</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            matchingProducts.forEach((product, index) => {
-                const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
-
-                const pcsPerBox = product.pcs_per_box;
-                const totalPcsOrdered = orderQtyDus * pcsPerBox;
-                const targetPerShiftPcs = product.targetPerShift;
-                const capacity3ShiftPcs = targetPerShiftPcs * SHIFTS_PER_DAY;
-
-                const shiftNet = totalPcsOrdered / targetPerShiftPcs;
-                const hoursNet = shiftNet * HOURS_PER_SHIFT;
-
-                const machine = product.machine;
-                const lastBusyShiftNet = estimationMachineTracker[machine] || 0;
-                const componentFinishShiftNet = lastBusyShiftNet + shiftNet;
-
-                estimationMachineTracker[machine] = componentFinishShiftNet;
-                longestShiftNet = Math.max(longestShiftNet, componentFinishShiftNet);
-
-                const displayedShift = Math.ceil(shiftNet);
-                const formattedHoursMinutes = formatHoursMinutes(hoursNet);
-
-                pendingScheduleComponents.push({
-                    productCode: product.code,
-                    productName: product.name, 
-                    machine: product.machine,
-                    machine_optional: product.machine_optional, 
-                    shiftNet: shiftNet 
-                });
-
-                componentDetailsHTML += `
-                    <tr class="border-b hover:bg-gray-100 ${rowClass}">
-                        <td class="py-2 px-3 text-gray-700"><strong>${product.name}</strong> (${product.machine})</td>
-                        <td class="py-2 px-3 text-right">${integerFormatter.format(pcsPerBox)}</td>
-                        <td class="py-2 px-3 text-right">${integerFormatter.format(totalPcsOrdered)}</td>
-                        <td class="py-2 px-3 text-right">${integerFormatter.format(targetPerShiftPcs)}</td>
-                        <td class="py-2 px-3 text-right font-bold text-red-700">${integerFormatter.format(capacity3ShiftPcs)}</td>
-                        <td class="py-2 px-3 text-right font-medium text-red-600">${formattedHoursMinutes}</td>
-                        <td class="py-2 px-3 text-right font-medium text-blue-600">${decimalFormatter.format(shiftNet)} (Dibulatkan: ${integerFormatter.format(displayedShift)})</td>
-                    </tr>
+            let hasError = false;
+            let anyProductFound = false;
+            
+            // Iterate through all input rows
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const codeInput = row.querySelector('.product-code-input');
+                const qtyInput = row.querySelector('.order-qty-input');
+                
+                const code = codeInput.value.trim();
+                const orderQtyDus = cleanInt(qtyInput.value);
+                
+                if (!code) continue; // Skip empty rows
+                
+                if (orderQtyDus <= 0) {
+                     showMessage(`Baris ke-${i+1}: Jumlah Pesanan harus valid (angka positif).`, "error");
+                     hasError = true;
+                     continue;
+                }
+                
+                const matchingProducts = Object.values(productionData).filter(data => data.code === code);
+                
+                if (matchingProducts.length === 0) {
+                     showMessage(`Baris ke-${i+1}: Kode Produk "${code}" tidak ditemukan.`, "error");
+                     hasError = true;
+                     continue;
+                }
+                
+                anyProductFound = true;
+                
+                combinedDetailsHTML += `
+                <div class="mb-6 border-b pb-4 border-gray-300">
+                    <h4 class="text-lg font-semibold text-indigo-800 mb-2 flex items-center">
+                        <span class="bg-indigo-100 text-indigo-800 py-1 px-2 rounded text-sm mr-2">Input #${i+1}</span>
+                        Kode: ${code} (Qty: ${integerFormatter.format(orderQtyDus)} Dus)
+                    </h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm text-xs">
+                            <thead>
+                                <tr class="bg-gray-100 text-left text-gray-600 uppercase tracking-wider">
+                                    <th class="py-2 px-3 border-b">Komponen/Mesin</th>
+                                    <th class="py-2 px-3 border-b text-right">Isi Dus</th>
+                                    <th class="py-2 px-3 border-b text-right">Total Pcs</th>
+                                    <th class="py-2 px-3 border-b text-right">Target Shift</th>
+                                    <th class="py-2 px-3 border-b text-right">Jam Butuh</th>
+                                    <th class="py-2 px-3 border-b text-right">Shift Butuh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                 `;
-            });
+                
+                matchingProducts.forEach((product, index) => {
+                    const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
 
-            componentDetailsHTML += `
-                        </tbody>
-                    </table>
+                    const pcsPerBox = product.pcs_per_box;
+                    const totalPcsOrdered = orderQtyDus * pcsPerBox;
+                    const targetPerShiftPcs = product.targetPerShift;
+                    
+                    const shiftNet = totalPcsOrdered / targetPerShiftPcs;
+                    const hoursNet = shiftNet * HOURS_PER_SHIFT;
+
+                    const machine = product.machine;
+                    const lastBusyShiftNet = estimationMachineTracker[machine] || 0;
+                    
+                    // Accumulate workload for this machine
+                    estimationMachineTracker[machine] = lastBusyShiftNet + shiftNet;
+                    
+                    // Update global max shift needed (based on accumulated machine time)
+                    // Note: We calculate longestShiftNet AFTER processing all inputs to see the bottleneck machine's total load
+                    
+                    const displayedShift = Math.ceil(shiftNet);
+                    const formattedHoursMinutes = formatHoursMinutes(hoursNet);
+
+                    pendingScheduleComponents.push({
+                        productCode: product.code,
+                        productName: product.name, 
+                        machine: product.machine,
+                        machine_optional: product.machine_optional, 
+                        shiftNet: shiftNet 
+                    });
+
+                    // UNDO: Menghapus teks keterangan (Bulat: ...)
+                    combinedDetailsHTML += `
+                        <tr class="border-b hover:bg-gray-100 ${rowClass}">
+                            <td class="py-2 px-3 text-gray-700"><strong>${product.name}</strong> (${product.machine})</td>
+                            <td class="py-2 px-3 text-right">${integerFormatter.format(pcsPerBox)}</td>
+                            <td class="py-2 px-3 text-right font-bold">${integerFormatter.format(totalPcsOrdered)}</td>
+                            <td class="py-2 px-3 text-right">${integerFormatter.format(targetPerShiftPcs)}</td>
+                            <td class="py-2 px-3 text-right font-medium text-red-600">${formattedHoursMinutes}</td>
+                            <td class="py-2 px-3 text-right font-medium text-blue-600">
+                                ${decimalFormatter.format(shiftNet)}
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                combinedDetailsHTML += `
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            `;
+                `;
+            }
+
+            if (hasError || !anyProductFound) {
+                if(!anyProductFound && !hasError) showMessage("Mohon masukkan minimal satu produk yang valid.", "error");
+                document.getElementById('results').classList.add('hidden');
+                document.getElementById('autoSchedulePanel').classList.add('hidden');
+                return;
+            }
+
+            // Calculate longest shift based on ACCUMULATED machine loads
+            for (const machine in estimationMachineTracker) {
+                if (estimationMachineTracker[machine] > longestShiftNet) {
+                    longestShiftNet = estimationMachineTracker[machine];
+                }
+            }
 
             const totalShiftsBooked = Math.ceil(longestShiftNet);
             const totalHoursNet = longestShiftNet * HOURS_PER_SHIFT;
@@ -2981,31 +3091,26 @@
             document.getElementById('resultDays').textContent = `${totalDaysBooked} Hari`;
 
             const simplifiedFinalSummaryHTML = `
-                <h3 class="text-xl font-bold text-gray-800 mt-6 mb-3">Total Estimasi Keseluruhan (Simulasi)</h3>
-                <ul class="list-disc list-inside space-y-1 ml-4 text-base">
-                    <li>Kode Pesanan: <span class="font-mono font-bold">${code}</span></li>
-                    <li>Jumlah Pesanan Dus: ${integerFormatter.format(orderQtyDus)} Dus</li>
-                    <li>Total Shift Murni (Simulasi): ${decimalFormatter.format(longestShiftNet)} Shift
-                        <span class="text-xs font-normal text-gray-500 block mt-0.5">(Simulasi paralel antar mesin, sekuensial pada mesin yang sama)</span>
-                    </li>
-                    <li class="font-bold">Total Jam Murni Dihitung: ${formattedTotalHoursNet}.
-                        <span class="text-xs font-normal text-gray-500 block mt-0.5">(Diperoleh dari ${decimalFormatter.format(longestShiftNet)} Shift &times; ${HOURS_PER_SHIFT} Jam, dibulatkan menjadi ${totalHoursBooked} Jam)</span>
-                    </li>
-                    <li class="font-bold">Total Shift Dijadwalkan: ${totalShiftsBooked} Shift.
-                        <span class="text-xs font-normal text-gray-500 block mt-0.5">(Pembulatan ke atas dari shift murni simulasi: ${decimalFormatter.format(longestShiftNet)} Shift)</span>
-                    </li>
-                    <li class="font-bold">Total Hari Dijadwalkan: ${totalDaysBooked} Hari.
-                        <span class="text-xs font-normal text-gray-500 block mt-0.5">(Pembulatan ke atas dari ${totalShiftsBooked} Shift / ${SHIFTS_PER_DAY} Hari)</span>
-                    </li>
-                </ul>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 class="text-xl font-bold text-green-900 mb-3">Ringkasan Estimasi Total</h3>
+                    <ul class="list-disc list-inside space-y-1 ml-2 text-base text-green-800">
+                        <li>Total Komponen Diproses: ${pendingScheduleComponents.length} Item</li>
+                        <li>Total Shift Paralel Tertinggi: <span class="font-bold">${decimalFormatter.format(longestShiftNet)} Shift</span>
+                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Mesin tersibuk menentukan durasi total proyek ini)</span>
+                        </li>
+                        <li class="font-bold">Durasi Kalender: ${totalDaysBooked} Hari
+                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Asumsi kerja 3 Shift/Hari non-stop)</span>
+                        </li>
+                    </ul>
+                </div>
             `;
 
-            document.getElementById('estimationDetails').innerHTML = componentDetailsHTML + simplifiedFinalSummaryHTML;
+            document.getElementById('estimationDetails').innerHTML = simplifiedFinalSummaryHTML + combinedDetailsHTML;
             document.getElementById('results').classList.remove('hidden');
             
             renderComponentSelectionList(pendingScheduleComponents);
 
-            showMessage(`Estimasi berhasil dihitung untuk Kode ${code} (Agregat ${matchingProducts.length} Komponen)!`, "info");
+            showMessage(`Estimasi berhasil dihitung untuk ${pendingScheduleComponents.length} komponen!`, "info");
 
             const autoSchedulePanel = document.getElementById('autoSchedulePanel');
             if (isLoggedIn) {
@@ -3042,8 +3147,8 @@
                     <div class="flex items-center p-2 rounded-md hover:bg-gray-50">
                         <input type="checkbox" id="component-check-${index}" value="${index}" class="component-checkbox rounded border-gray-400 focus:ring-indigo-500" checked>
                         <label for="component-check-${index}" class="ml-3 text-sm text-gray-700">
-                            <span class="font-bold">${component.productName}</span> (${component.machine})
-                            <span class="block text-xs text-gray-500">${decimalFormatter.format(shiftNet)} Shift (Dibulatkan: ${shiftsRounded} Shift)</span>
+                            <span class="font-bold">${component.productCode} - ${component.productName}</span> (${component.machine})
+                            <span class="block text-xs text-gray-500">${decimalFormatter.format(shiftNet)} Shift</span>
                         </label>
                     </div>
                 `;
@@ -3093,19 +3198,34 @@
 
                     const statusMessage = document.getElementById('autoScheduleStatus');
                     statusMessage.classList.remove('hidden');
+                    
+                    // UPDATE: Tampilan hasil simulasi sekarang menggunakan tombol yang lebih jelas
                     statusMessage.innerHTML = `
-                        Simulasi Berhasil!
-                        <ul class="list-disc list-inside">
-                            <li>Komponen Terjadwal: ${results.scheduledCount} dari ${selectedComponents.length}</li>
-                            <li>Tanggal Mulai: ${startDateStr}</li>
-                            <li>Tanggal Selesai (Simulasi): ${results.endDateDisplay}</li>
-                            <li>Total Slot yang Diusulkan: ${results.proposedSlots.length}</li>
-                            <li><button onclick='confirmAndSaveSchedule(${JSON.stringify(results.proposedSlots)}, "${startDateStr}", "${results.endDateDisplay}")' class="text-indigo-600 hover:text-indigo-800 font-bold underline mt-2">KLIK DI SINI untuk Simpan Jadwal ke Database</button></li>
-                        </ul>
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
+                            <p class="font-bold">Simulasi Berhasil!</p>
+                            <p>Sistem telah menemukan slot kosong untuk ${results.scheduledCount} dari ${selectedComponents.length} komponen.</p>
+                            <ul class="list-disc list-inside text-sm mt-2 mb-4">
+                                <li>Tanggal Mulai: ${startDateStr}</li>
+                                <li>Estimasi Selesai: ${results.endDateDisplay}</li>
+                                <li>Total Slot Dijadwalkan: ${results.proposedSlots.length} Slot</li>
+                            </ul>
+                            
+                            <div class="flex items-center mt-2">
+                                <button onclick='confirmAndSaveSchedule(${JSON.stringify(results.proposedSlots)}, "${startDateStr}", "${results.endDateDisplay}")' 
+                                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                                    </svg>
+                                    Simpan ke Database & Lihat Tabel
+                                </button>
+                                <span class="text-xs text-gray-500 ml-3 italic">Klik untuk menerapkan hasil ke Tabel Perencanaan.</span>
+                            </div>
+                        </div>
                     `;
                 }
 
             } else {
+                // ... existing code for non-admin ...
                 const endDate = new Date(startDate);
                 endDate.setDate(startDate.getDate() + 6);
                 const endDateStr = formatDateToDMY(endDate);
@@ -3155,7 +3275,7 @@
             if (errorCount > 0) {
                  showMessage(`Gagal menyimpan ${errorCount} slot. ${errors[0]}. Cek RLS atau kolom database.`, "error");
             } else {
-                 showMessage(`Penjadwalan Otomatis Berhasil! ${slots.length} slot berhasil ditambahkan.`, "info");
+                 showMessage(`Berhasil! ${slots.length} slot jadwal telah disimpan. Mengalihkan ke Tabel Perencanaan...`, "info");
             }
 
             document.getElementById('autoScheduleStatus').classList.add('hidden');
@@ -3167,16 +3287,18 @@
                 let weeklyEndDateStr = endDateDisplay; 
 
                 if (startDate) { 
+                    // Default view 1 minggu ke depan agar tabel tidak terlalu lebar
                     const weeklyEndDate = new Date(startDate);
                     weeklyEndDate.setDate(startDate.getDate() + 6); 
                     weeklyEndDateStr = formatDateToDMY(weeklyEndDate); 
                 } 
 
+                // Set input tanggal di tab Planning
                 document.getElementById('startDate').value = startDateStr;
                 document.getElementById('endDate').value = weeklyEndDateStr; 
 
+                // Pindah ke Tab Planning & Render Tabel
                 showView('planning');
-                
                 renderPlanningTable(startDateStr, weeklyEndDateStr); 
             }
         }
@@ -3321,14 +3443,8 @@
             const printArea = document.getElementById('estimationPrintArea');
             const detailsDiv = document.getElementById('estimationDetails');
             const toggleBtnContainer = document.getElementById('toggleDetailsContainer');
-            const productCode = document.getElementById('productCode').value.trim() || 'Estimasi';
+            const autoSchedulePanel = document.getElementById('autoSchedulePanel'); // Referensi ke panel jadwal
             const logoUrl = 'https://img.lazcdn.com/g/ff/kf/Sf1cc8d330638465fa063a736e486ed5fK.jpg_720x720q80.jpg';
-
-            const autoSchedulePanel = document.getElementById('autoSchedulePanel');
-            const autoScheduleForm = document.getElementById('autoScheduleFormGrid');
-            const autoScheduleStatus = document.getElementById('autoScheduleStatus');
-            const componentSelectionPanel = document.getElementById('componentSelectionContainer');
-
 
             if (!printArea || !window.jspdf || !window.html2canvas) {
                 showMessage("Library PDF (jsPDF/html2canvas) belum dimuat.", "error");
@@ -3336,22 +3452,25 @@
             }
 
             const wasDetailsHidden = detailsDiv.classList.contains('hidden');
+            
+            // Cek apakah panel jadwal sedang tampil
+            const wasScheduleVisible = !autoSchedulePanel.classList.contains('hidden');
 
             showMessage("Mempersiapkan PDF (Skala 2x)...", "info");
 
+            // 1. Tampilkan Detail (agar tercetak)
             if (wasDetailsHidden) {
                 detailsDiv.classList.remove('hidden'); 
             }
-            toggleBtnContainer.classList.add('hidden'); 
-            printArea.classList.add('pdf-export-font'); 
-            componentSelectionPanel.classList.add('hidden'); 
-
-            const statusVisible = !autoScheduleStatus.classList.contains('hidden');
-            if (statusVisible) {
-                autoScheduleForm.classList.add('hidden');
-            } else {
+            
+            // 2. Sembunyikan Panel Jadwal saat print (Fitur ini tetap dipertahankan untuk kerapian PDF)
+            if (wasScheduleVisible) {
                 autoSchedulePanel.classList.add('hidden');
             }
+
+            // 3. Sembunyikan tombol toggle
+            toggleBtnContainer.classList.add('hidden'); 
+            printArea.classList.add('pdf-export-font'); 
 
             try {
                 let logoBase64 = '';
@@ -3398,7 +3517,7 @@
                     }
                 }
                 
-                const title = `HASIL ESTIMASI WAKTU KODE ${productCode.toUpperCase()}`;
+                const title = `HASIL ESTIMASI WAKTU PRODUKSI (MULTI-ITEM)`;
                 pdf.setFontSize(18); 
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(40, 40, 40); 
@@ -3428,7 +3547,7 @@
                 
                 pdf.addImage(imgData, 'PNG', x, imageY, finalImgWidth, finalImgHeight);
 
-                pdf.save(`Estimasi_${productCode}_${new Date().toISOString().split('T')[0]}.pdf`);
+                pdf.save(`Estimasi_Produksi_${new Date().toISOString().split('T')[0]}.pdf`);
 
                 showMessage("PDF berhasil dibuat!", "info");
 
@@ -3436,15 +3555,18 @@
                 console.error("Gagal membuat PDF:", e);
                 showMessage("Gagal membuat PDF. Lihat konsol untuk detail error.", "error");
             } finally {
+                // Kembalikan tampilan seperti semula
                 if (wasDetailsHidden) {
                     detailsDiv.classList.add('hidden'); 
                 }
+                
+                // Kembalikan Panel Jadwal jika sebelumnya terlihat
+                if (wasScheduleVisible) {
+                    autoSchedulePanel.classList.remove('hidden');
+                }
+
                 toggleBtnContainer.classList.remove('hidden'); 
                 printArea.classList.remove('pdf-export-font'); 
-                componentSelectionPanel.classList.remove('hidden'); 
-                
-                autoScheduleForm.classList.remove('hidden');
-                autoSchedulePanel.classList.remove('hidden');
             }
         }
 
@@ -3472,10 +3594,25 @@
                 for (let j = 0; j < cells.length; j++) {
                     const cell = cells[j];
                     
+                    // PERBAIKAN DI SINI: Logika Pengambilan Nama & Tipe Mesin
                     if (cell.classList.contains('sticky-machine')) {
-                        const machineNameSpan = cell.querySelector('span');
-                        if (machineNameSpan) {
-                            cell.textContent = machineNameSpan.textContent.trim();
+                        // 1. Cari div pembungkus nama (karena ada ikon info)
+                        const nameDiv = cell.querySelector('div');
+                        // Ambil teks dari span di dalam div, atau span langsung jika tidak ada div
+                        const nameSpan = nameDiv ? nameDiv.querySelector('span') : cell.querySelector('span');
+                        
+                        // 2. Cari span khusus tipe mesin (yang punya class text-xs)
+                        const typeSpan = cell.querySelector('span.text-xs');
+
+                        const machineCode = nameSpan ? nameSpan.textContent.trim() : '';
+                        const machineType = typeSpan ? typeSpan.textContent.trim() : '';
+
+                        // 3. Gabungkan keduanya
+                        if (machineCode && machineType) {
+                            cell.textContent = `${machineCode} (${machineType})`;
+                        } else {
+                            // Fallback jika salah satu kosong
+                            cell.textContent = machineCode || cell.textContent.trim();
                         }
 
                     } else if (cell.classList.contains('sticky-shift')) {
