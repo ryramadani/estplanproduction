@@ -1,143 +1,104 @@
-Laporan Fitur & Fungsi: Estimasi Produksi & Perencanaan Mesin
+. Header & Akses Pengguna
+Navigasi Tab: Terdiri dari 3 menu utama: Estimasi Produksi, Perencanaan Mesin, dan Data Master.
 
-1. Pendahuluan
+Tombol Login: Terletak di pojok kanan atas.
 
-Aplikasi web ini dirancang sebagai alat bantu komprehensif untuk Manufaktur (PPIC/Produksi) yang berfungsi untuk:
+Mode Tamu (Default): Hanya bisa melihat data, menghitung estimasi, dan melihat jadwal.
 
-Mengestimasi kebutuhan waktu produksi (jam, shift, hari) berdasarkan pesanan.
+Mode Admin: Membuka fitur "tulis" (Input data baru, Edit, Hapus, Drag & Drop jadwal, Export PDF/Excel, Penjadwalan Otomatis).
 
-Merencanakan dan memvisualisasikan alokasi jadwal pada mesin-mesin produksi.
+Password default: "admin123".
 
-Mengelola data master yang menjadi dasar semua perhitungan.
+2. Menu 1: Estimasi Produksi (Tab Default)
+Fitur ini digunakan untuk menghitung berapa lama waktu yang dibutuhkan untuk menyelesaikan pesanan berdasarkan kapasitas mesin.
 
-Aplikasi ini terhubung langsung ke database Supabase untuk pengelolaan data yang persisten dan (pada Data Master) real-time.
+Input Pesanan (Daftar Pesanan):
 
-2. Fitur Utama (Berdasarkan Tampilan/Tab)
+Baris Input Dinamis: Anda bisa memasukkan banyak jenis produk sekaligus.
 
-Fungsionalitas aplikasi dibagi menjadi tiga tab utama untuk alur kerja yang jelas.
+Tombol "+ Tambah Item Lain": Menambah baris input baru untuk menghitung pesanan campuran (multi-item).
 
-A. Tab: Estimasi Produksi (Tampilan Utama)
+Autocomplete Kode Produk: Saat mengetik kode, sistem akan menyarankan produk yang ada di Data Master beserta mesin utamanya.
 
-Ini adalah halaman awal dan pusat kalkulasi.
+Input Jumlah: Masukkan jumlah pesanan dalam satuan Dus (Sistem otomatis mengonversi ke Pcs berdasarkan data master).
 
-Formulir Estimasi (Untuk Umum & Admin):
+Tombol "Hitung Estimasi Produksi": Melakukan kalkulasi total beban kerja.
 
-Input Kode Produk: Pengguna memasukkan kode produk (misal: "309MM"). Sistem menyediakan autocomplete dari Data Master.
+Hasil Perhitungan:
 
-Input Jumlah Pesanan (Dus): Pengguna memasukkan jumlah pesanan dalam satuan dus.
+Kartu Ringkasan: Menampilkan Total Jam, Total Shift, dan Total Hari yang dibutuhkan.
 
-Tombol "Hitung Estimasi Produksi":
+Detail Perhitungan: Tabel rinci per produk (Target per shift, jam yang dibutuhkan, dll).
 
-Fungsi: Memicu kalkulasi inti.
+Export PDF (Admin Only): Mencetak hasil estimasi ke format PDF resmi dengan logo perusahaan.
 
-Logika Cerdas: Sistem mengambil semua komponen yang terkait dengan "309MM" dari Data Master. Sistem melakukan simulasi mini untuk menghitung total waktu, dengan mempertimbangkan komponen yang berjalan paralel di mesin berbeda dan komponen yang berjalan sekuensial (antri) di mesin yang sama.
+Penjadwalan Otomatis (Admin Only):
 
-Output: Menampilkan 3 kartu hasil utama (Total Jam, Total Shift, Total Hari) yang sudah dibulatkan.
+Muncul setelah estimasi dihitung.
 
-Panel Hasil & Detail:
+Simulasi Jadwal: Sistem mencari slot kosong di mesin yang sesuai mulai dari "Tanggal Mulai Ideal" yang Anda input.
 
-Tabel Detail Perhitungan: Muncul setelah estimasi, dapat disembunyikan/ditampilkan. Merinci perhitungan untuk setiap komponen (Total PCS, Target Shift, Kebutuhan Shift Murni (desimal), Kebutuhan Jam).
+Tombol Simpan: Menyimpan hasil simulasi langsung ke database jadwal.
 
-Tombol Export PDF (Hanya Admin): Admin dapat mengunduh laporan PDF dari hasil estimasi dan rincian perhitungannya. Laporan ini menyertakan logo perusahaan dan format yang rapi untuk dibagikan.
+3. Menu 2: Perencanaan Mesin
+Fitur ini adalah visualisasi jadwal (Visual Control Board) untuk melihat beban kerja mesin.
 
-Panel Penjadwalan Otomatis (Hanya Admin):
+Filter Tanggal: Pilih "Tanggal Mulai" dan "Tanggal Akhir" untuk melihat matriks jadwal pada periode tertentu.
 
-Daftar Pilihan Komponen (Checklist): Fitur ini memungkinkan Admin untuk memilih komponen mana saja dari hasil estimasi yang ingin dijadwalkan. Secara default, semua komponen terpilih.
+Form Input Slot Jadwal (Admin Only):
 
-Input Tanggal Mulai: Admin memilih tanggal dimulainya produksi.
+Form manual untuk memasukkan jadwal satu per satu jika tidak menggunakan fitur otomatis.
 
-Tombol "Jadwalkan Otomatis":
+Sistem otomatis mengecek ketersediaan mesin (mencegah bentrok jadwal).
 
-Fungsi: Memicu simulasi penjadwalan hanya untuk komponen yang dicentang.
+Matriks Jadwal (Tabel Visual):
 
-Logika: Sistem akan mencari slot kosong (Senin-Jumat) di mesin utama (atau mesin opsional jika utama penuh) secara konsisten untuk setiap komponen, mulai dari tanggal yang dipilih.
+Kolom Sticky: Nama Mesin dan Shift tetap terlihat saat tabel digeser ke kanan (scroll horizontal).
 
-Output: Menampilkan ringkasan simulasi (misal: "3 dari 3 komponen terjadwal, selesai pada [Tanggal]") dan sebuah link konfirmasi.
+Indikator Warna:
 
-Konfirmasi Simpan: Mengklik link "KLIK DI SINI" akan menyimpan semua slot yang disimulasikan ke database (Tabel production_schedule).
+Merah Muda: Hari libur/akhir pekan.
 
-Panel Penjadwalan (Pengguna Biasa):
+Teks Merah: Jadwal yang diletakkan di hari libur.
 
-Fungsi: Jika pengguna bukan Admin, panel ini berubah fungsi. Input tanggal mulai di sini akan berfungsi sebagai pintasan (shortcut) untuk melihat jadwal 7 hari ke depan di Tab "Perencanaan Mesin".
+Teks Biru/Hitam: Jadwal normal.
 
-B. Tab: Perencanaan Mesin
+Drag & Drop (Admin Only): Admin dapat memindahkan jadwal dari satu sel ke sel lain (misal: memindahkan dari Shift 1 ke Shift 2, atau ke tanggal lain) hanya dengan menarik (drag) item jadwal.
 
-Tab ini berfokus pada visualisasi dan manajemen slot jadwal yang sudah ada.
+Edit & Hapus Cepat (Admin Only): Ikon pensil dan sampah muncul di setiap slot jadwal untuk pengeditan cepat.
 
-Formulir Periode Tanggal (Untuk Umum & Admin):
+Ringkasan Harian: Di atas tabel, terdapat ringkasan utilisasi harian (berapa slot mesin yang aktif vs menganggur).
 
-Fungsi: Pengguna memasukkan rentang tanggal (Mulai dan Akhir) untuk melihat matriks jadwal. Jika tanggal akhir dikosongkan, sistem otomatis mengaturnya ke 7 hari setelah tanggal mulai.
+Export Excel: Mengunduh tampilan matriks jadwal ke file .xlsx.
 
-Formulir Input Slot Jadwal (Hanya Admin):
+4. Menu 3: Data Master
+Pusat database aplikasi.
 
-Fungsi: Memungkinkan Admin untuk memesan (booking) satu slot jadwal secara manual.
+Panel Admin (Input Data Baru):
 
-Fitur Cerdas:
+Formulir untuk menambah produk baru ke database (Kode, Nama, Mesin Utama, Mesin Optional, Isi Dus, Target Shift).
 
-Auto-fill Komponen: Admin mengisi Kode Barang, dan sistem otomatis mengisi dropdown Nama Komponen.
+Hanya muncul jika sudah login.
 
-Auto-fill Mesin: Setelah Nama Komponen dipilih, sistem otomatis memilih Mesin Utama yang sesuai.
+Tabel Data Master Produksi:
 
-Validasi Hari Libur: Jika Admin memilih tanggal di hari Sabtu/Minggu, sistem otomatis memindahkannya ke hari Senin berikutnya saat disimpan.
+Daftar semua produk yang terdaftar, kapasitas per shift, dan mesinnya.
 
-Validasi Slot: Sistem akan menampilkan status real-time ("Slot Tersedia", "Slot Penuh", atau "Dialihkan ke Mesin Opsional") sebelum Admin menekan simpan.
+Fitur Pencarian cepat.
 
-Matriks Jadwal (Tabel Utama):
+Aksi (Admin): Edit data dan Hapus data produk.
 
-Visualisasi: Menampilkan tabel besar dengan Mesin di baris dan Tanggal di kolom.
+Tabel Master Jadwal Mesin:
 
-Kolom "Sticky": Kolom "Mesin" dan "Shift" akan tetap terlihat (terkunci) saat pengguna melakukan scroll horizontal.
+Daftar "mentah" seluruh jadwal yang tersimpan di database (List View).
 
-Visualisasi Slot:
+Fitur Hapus Massal (Admin): Checkbox untuk memilih banyak jadwal sekaligus dan menghapusnya secara bersamaan.
 
-Slot Terisi: Menampilkan Kode Barang dan Nama Komponen.
+Export Excel: Mengunduh database jadwal lengkap.
 
-Slot Kosong: Ditandai "Slot Kosong".
+5. Fitur Teknis & UX (User Experience)
+Validasi Jadwal: Sistem akan memberi peringatan jika Anda mencoba menjadwalkan di mesin yang sudah penuh atau di hari libur (bisa di-bypass dengan konfirmasi).
 
-Hari Libur: Sel di hari Sabtu/Minggu ditandai "LIBUR" dengan latar merah.
+Responsif: Tampilan menyesuaikan layar (tabel bisa di-scroll horizontal pada layar kecil).
 
-Aksi Cepat (Hanya Admin): Admin dapat mengklik ikon pensil (Edit) atau sampah (Hapus) langsung di dalam slot yang terisi untuk manajemen cepat.
-
-Tombol Export Excel (Matriks):
-
-Fungsi: Mengekspor tampilan matriks jadwal yang sedang dilihat ke file Excel (.xlsx).
-
-Fitur: Laporan Excel ini mempertahankan styling (misal: sel "LIBUR" tetap berwarna merah) dan struktur merge-cell untuk kolom mesin.
-
-C. Tab: Data Master
-
-Tab ini berfungsi sebagai "database" yang dapat dilihat dan dikelola oleh Admin.
-
-Tabel Master Produksi:
-
-Fungsi: Menampilkan semua data dari tabel production_rates.
-
-Fitur: Dilengkapi search bar untuk memfilter data berdasarkan Kode, Nama, atau Mesin (Utama/Opsional).
-
-Manajemen (via Tab Estimasi): Admin dapat menambah, mengedit, atau menghapus data ini menggunakan "Formulir Data Produksi Baru" yang terletak di Tab Estimasi.
-
-Tabel Master Jadwal:
-
-Fungsi: Menampilkan semua data jadwal yang pernah dibuat dari tabel production_schedule.
-
-Pencarian Lanjutan: Dilengkapi search bar yang dapat memfilter berdasarkan Mesin, Kode, Nama Komponen, atau Nomor Shift (misal: "Shift 1" atau "1").
-
-Manajemen Multi-Hapus (Hanya Admin):
-
-Admin dapat mencentang beberapa slot jadwal.
-
-Tersedia checkbox "Pilih Semua" untuk memilih semua hasil yang sedang difilter.
-
-Tombol "Hapus Item Terpilih" muncul untuk menghapus semua data yang dicentang dalam satu kali aksi.
-
-Tombol Export Excel (Master Jadwal): Mengekspor daftar jadwal yang sedang difilter ke file Excel.
-
-3. Fitur Latar Belakang & Teknis
-
-Otentikasi Admin: Sistem menggunakan password sederhana (admin123) untuk membuka fitur-fitur kritis (CRUD data, ekspor, dan penjadwalan otomatis).
-
-Integrasi Supabase: Seluruh aplikasi terhubung ke database Supabase untuk menyimpan dan mengambil data.
-
-Listener Real-time (Data Master): Aplikasi mendengarkan perubahan real-time pada tabel production_rates. Jika ada data master yang diubah (misal: oleh Admin lain), tabel di Data Master akan otomatis ter-update tanpa perlu refresh.
-
-Desain Responsif: Dibangun dengan Tailwind CSS, aplikasi dapat beradaptasi dengan baik di perangkat mobile maupun desktop.
+Supabase Realtime: Data disimpan di cloud (Supabase), sehingga jika ada perubahan data di satu komputer, data di komputer lain juga akan terupdate (jika di-refresh/re-fetch).
