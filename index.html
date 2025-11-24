@@ -80,7 +80,7 @@
             opacity: 0;
         }
         #scheduleInputForm.visible {
-            max-height: 500px; /* Nilai yang cukup besar untuk menampung form */
+            max-height: 600px; /* Diperbesar sedikit untuk menampung input baru */
             opacity: 1;
         }
 
@@ -365,9 +365,9 @@
             <div id="scheduleInputForm" class="mb-6 p-6 bg-cyan-50 rounded-xl border border-cyan-200 hidden">
                 <h3 class="text-lg font-bold text-cyan-800 mb-4">Input Slot Jadwal (Admin)</h3>
                 
-                <form onsubmit="event.preventDefault(); saveScheduleSlot(false);" class="grid grid-cols-1 sm:grid-cols-7 gap-3 items-end">
+                <form onsubmit="event.preventDefault(); saveScheduleSlot(false);" class="grid grid-cols-1 sm:grid-cols-8 gap-3 items-end">
 
-                    <div>
+                    <div class="sm:col-span-2">
                         <label for="inputScheduleMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
                         <select id="inputScheduleMachine" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm" onchange="checkSlotAvailability()">
                         </select>
@@ -390,6 +390,12 @@
                     <div>
                         <label for="inputScheduleCode" class="block text-sm font-medium text-gray-700">Kode Barang</label>
                         <input type="text" id="inputScheduleCode" placeholder="Kode Brg" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm uppercase-input" oninput="this.value = this.value.toUpperCase()" onblur="findProductNameByCode()">
+                    </div>
+                    
+                    <!-- NEW INPUT: JUMLAH PESANAN -->
+                    <div>
+                        <label for="inputScheduleQty" class="block text-sm font-medium text-gray-700">Jml Order (Dus)</label>
+                        <input type="number" id="inputScheduleQty" placeholder="0" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm">
                     </div>
 
                     <div class="sm:col-span-2">
@@ -572,7 +578,13 @@
                     <label for="modalScheduleCode" class="block text-sm font-medium text-gray-700">Kode Barang</label>
                     <input type="text" id="modalScheduleCode" placeholder="Kode Brg" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-sm uppercase-input" oninput="this.value = this.value.toUpperCase()" onblur="findProductNameByCode_Modal()">
                 </div>
-                <div class="sm:col-span-2">
+                 <!-- NEW INPUT MODAL: JUMLAH PESANAN -->
+                 <div>
+                    <label for="modalScheduleQty" class="block text-sm font-medium text-gray-700">Jml Order (Dus)</label>
+                    <input type="number" id="modalScheduleQty" placeholder="0" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-sm">
+                </div>
+
+                <div class="sm:col-span-2"> <!-- Ubah span agar layout rapi -->
                      <label for="modalScheduleName" class="block text-sm font-medium text-gray-700">Nama Komponen</label>
                      <select id="modalScheduleName" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm text-sm" onchange="handleComponentSelectionChange_Modal()">
                         <option value="" disabled selected>Otomatis (Isi Kode)</option>
@@ -883,6 +895,7 @@
             const dateStr = document.getElementById('inputScheduleDate').value;
             const shift = document.getElementById('inputScheduleShift').value;
             const code = document.getElementById('inputScheduleCode').value.trim();
+            const orderQty = document.getElementById('inputScheduleQty').value; // Get Qty
 
             if (!machineDropdown.value || !dateStr || !shift || !code) {
                  showMessage("Mesin Utama, Tanggal, Shift, dan Kode Barang wajib diisi.", "error");
@@ -922,6 +935,7 @@
                 schedule_shift: shift,
                 product_code: code,
                 product_name: document.getElementById('inputScheduleName').value,
+                order_qty: orderQty, // Add order_qty to payload
                 timestamp: new Date().toISOString()
             };
 
@@ -953,6 +967,8 @@
                      errorMessage = `Gagal menyimpan: Tabel '${SCHEDULE_TABLE_NAME}' tidak ditemukan di Supabase. Mohon buat tabel tersebut.`;
                  } else if (e.code && (e.code === '401' || e.code === '403')) {
                      errorMessage = "Gagal menyimpan. Cek pengaturan RLS (Row Level Security) di Supabase untuk tabel jadwal.";
+                 } else if (e.message && e.message.includes("column \"order_qty\" does not exist")) {
+                     errorMessage = "Gagal menyimpan: Kolom 'order_qty' belum ada di Supabase. Harap tambahkan kolom tersebut.";
                  }
                 showMessage(errorMessage, "error");
             }
@@ -968,6 +984,7 @@
             const dateStr = document.getElementById('modalScheduleDate').value;
             const shift = document.getElementById('modalScheduleShift').value;
             const code = document.getElementById('modalScheduleCode').value.trim();
+            const orderQty = document.getElementById('modalScheduleQty').value;
             const currentId = document.getElementById('modalScheduleId').value;
 
             if (!machineDropdown.value || !dateStr || !shift || !code || !currentId) {
@@ -1008,6 +1025,7 @@
                 schedule_shift: shift,
                 product_code: code,
                 product_name: document.getElementById('modalScheduleName').value,
+                order_qty: orderQty, // Update qty
                 timestamp: new Date().toISOString()
             };
 
@@ -1136,6 +1154,7 @@
             document.getElementById('modalScheduleDate').value = displayDate;
             document.getElementById('modalScheduleShift').value = scheduleItem.schedule_shift;
             document.getElementById('modalScheduleCode').value = scheduleItem.product_code;
+            document.getElementById('modalScheduleQty').value = scheduleItem.order_qty || ''; // Load existing qty
 
             findProductNameByCode_Modal();
 
@@ -1154,6 +1173,7 @@
         window.cancelScheduleEdit = function() {
             document.getElementById('inputScheduleCode').value = '';
             document.getElementById('inputScheduleDate').value = ''; 
+            document.getElementById('inputScheduleQty').value = '';
             
             const nameDropdown = document.getElementById('inputScheduleName');
             nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
@@ -2133,6 +2153,7 @@
                                 <th class="py-3 px-4 border-b">Mesin Utama</th>
                                 <th class="py-3 px-4 border-b">Kode Produk</th>
                                 <th class="py-3 px-4 border-b">Nama Komponen</th>
+                                <th class="py-3 px-4 border-b text-center">Jml Pesanan (Dus)</th>
                                 <th class="py-3 px-4 border-b text-center">Shift</th>
                                 <th class="py-3 px-4 border-b text-center">Tanggal Jadwal</th>
                                 ${isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : ''}
@@ -2143,6 +2164,9 @@
 
             const visibleIds = getVisibleScheduleIds(); 
             const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedScheduleIds.has(id));
+            
+            // Variabel untuk melacak kode produk baris sebelumnya (untuk grouping)
+            let lastSeenCode = null;
 
             filteredData.forEach((data, index) => {
                 const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
@@ -2151,6 +2175,31 @@
                 const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
 
                 const productName = data.product_name || 'Nama?';
+                
+                // --- UNDO LOGIKA HITUNG JUMLAH (DUS) ---
+                // Kembali ke logika awal: Hanya tampilkan data asli database atau '-'
+                let finalQty = data.order_qty;
+                if (!finalQty || finalQty == 0) {
+                    finalQty = '-';
+                }
+
+                // --- LOGIKA TAMPILAN GROUPING ---
+                const isSameGroup = (lastSeenCode === data.product_code);
+                
+                let orderQtyDisplay = '';
+                if (!isSameGroup) {
+                    // Tampilan Angka (Hanya jika ada data asli)
+                    if (finalQty !== '-') {
+                        orderQtyDisplay = `<span class="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">${finalQty}</span>`;
+                    } else {
+                        orderQtyDisplay = `<span class="text-gray-400 font-medium">-</span>`;
+                    }
+                    lastSeenCode = data.product_code; 
+                } else {
+                    // Jika sama dengan atasnya
+                    orderQtyDisplay = `<span class="text-gray-300 text-lg">"</span>`; 
+                }
+                // ----------------------------------
 
                 const isChecked = selectedScheduleIds.has(data.id); 
                 const checkboxCell = isLoggedIn ? `
@@ -2192,6 +2241,7 @@
                             ${data.product_code}
                         </td>
                         <td class="py-3 px-4 text-gray-700 text-sm">${productName}</td>
+                        <td class="py-3 px-4 text-center align-middle">${orderQtyDisplay}</td>
                         <td class="py-3 px-4 text-gray-700 text-center">${data.schedule_shift.split(' ')[1]}</td>
                         <td class="py-3 px-4 text-gray-700 text-center">${displayDate}</td>
                         ${actionButtons}
@@ -3032,7 +3082,8 @@
                         productName: product.name, 
                         machine: product.machine,
                         machine_optional: product.machine_optional, 
-                        shiftNet: shiftNet 
+                        shiftNet: shiftNet,
+                        orderQty: orderQtyDus // Store Order Qty here for Auto Schedule
                     });
 
                     // UNDO: Menghapus teks keterangan (Bulat: ...)
@@ -3253,7 +3304,8 @@
                 schedule_date: slot.dbDate,
                 schedule_shift: slot.shift,
                 product_code: slot.productCode, 
-                product_name: slot.productName, 
+                product_name: slot.productName,
+                order_qty: slot.orderQty, // INSERT QTY
                 timestamp: new Date().toISOString()
             }));
 
@@ -3409,6 +3461,7 @@
                                     dbDate: dbDate,
                                     productCode: component.productCode,
                                     productName: component.productName,
+                                    orderQty: component.orderQty // PASS QTY TO SLOT
                                 });
 
                                 simulationSlotTracker.add(key); 
@@ -3712,6 +3765,7 @@
                     "MESIN UTAMA": data.mesin,
                     "KODE PRODUK": data.product_code,
                     "NAMA KOMPONEN": data.product_name || 'N/A',
+                    "JML PESANAN (DUS)": data.order_qty || '-', // EXPORT QTY
                     "SHIFT": data.schedule_shift.split(' ')[1], 
                     "TANGGAL JADWAL": displayDate
                 };
@@ -3726,6 +3780,7 @@
                     { wch: 15 }, 
                     { wch: 15 }, 
                     { wch: 30 }, 
+                    { wch: 15 }, // QTY COL WIDTH
                     { wch: 10 }, 
                     { wch: 18 }  
                 ];
