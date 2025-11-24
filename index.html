@@ -531,23 +531,23 @@
             </div>
         </div>
 
-    <!-- ============================================== -->
-    <!-- MODAL (POP-UP) SECTION -->
-    <!-- ============================================== -->
-
-    <!-- Modal Konfirmasi Hari Libur -->
+    <!-- Modal Konfirmasi Hari Libur / Swap (Diperbarui strukturnya) -->
     <div id="weekendConfirmModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center modal-overlay">
-        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm">
-            <h3 class="text-xl font-bold mb-4 text-orange-600 flex items-center">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-sm transform transition-all scale-100">
+            <h3 class="text-xl font-bold mb-4 text-orange-600 flex items-center border-b pb-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                Konfirmasi Hari Libur
+                <span id="weekendModalTitle">Konfirmasi Hari Libur</span>
             </h3>
-            <p class="text-gray-700 mb-4">Tanggal <span id="weekendConfirmDate" class="font-bold"></span> adalah hari libur (Akhir Pekan). Apakah Anda yakin ingin menjadwalkan produksi di hari ini?</p>
-            <div class="flex justify-end space-x-3">
-                <button type="button" onclick="toggleWeekendConfirmModal(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
-                <button type="button" onclick="handleWeekendConfirm()" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition duration-150 shadow-md">Ya, Tetap Jadwalkan</button>
+            
+            <div id="weekendConfirmText" class="text-gray-700 mb-6 text-sm leading-relaxed">
+                <!-- Konten teks akan diisi lewat JS -->
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-2">
+                <button type="button" onclick="toggleWeekendConfirmModal(false)" class="px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300">Batal</button>
+                <button type="button" onclick="handleWeekendConfirm()" class="px-4 py-2 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition duration-150 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">Ya, Lanjutkan</button>
             </div>
         </div>
     </div>
@@ -690,6 +690,7 @@
         
         let pendingWeekendAction = null; 
         let pendingDropUpdate = null;
+        let pendingSwapUpdate = null; // New for Swap
 
         const STATIC_MACHINE_DATA = [
             { code: 'A01', type: 'HC -450 T' }, { code: 'A02', type: 'HC -450 T' }, { code: 'A03', type: 'CF -600 T' },
@@ -1061,12 +1062,65 @@
             }
         }
 
-        window.toggleWeekendConfirmModal = function(show, action = null, dateStr = '') {
+        window.toggleWeekendConfirmModal = function(show, action = null, dateStr = '', details = null) {
             const modal = document.getElementById('weekendConfirmModal');
+            if (!modal) return;
+            
             modal.classList.toggle('hidden', !show);
             
-            if (show && dateStr) {
-                document.getElementById('weekendConfirmDate').textContent = dateStr;
+            if (show) {
+                const titleEl = document.getElementById('weekendModalTitle');
+                const textEl = document.getElementById('weekendConfirmText');
+                
+                if (action === 'swap') {
+                    const sCode = details ? details.source : 'Item A';
+                    const tCode = details ? details.target : 'Item B';
+                    const isRisk = details && details.isRisk;
+
+                    // Ikon Panah SVG (Pengganti FontAwesome)
+                    const swapIcon = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                    `;
+
+                    if (isRisk) {
+                        if (titleEl) titleEl.textContent = "Konfirmasi Swap (Hari Libur)";
+                        if (textEl) {
+                            textEl.innerHTML = `
+                                <p class="mb-3">Penukaran jadwal ini melibatkan <strong>Hari Libur (Akhir Pekan)</strong>.</p>
+                                <div class="flex items-center justify-center bg-orange-50 border border-orange-100 p-3 rounded-lg mb-3">
+                                    <span class="font-bold text-indigo-700">${sCode}</span>
+                                    ${swapIcon}
+                                    <span class="font-bold text-indigo-700">${tCode}</span>
+                                </div>
+                                <p>Apakah Anda yakin ingin melanjutkan penukaran?</p>
+                            `;
+                        }
+                    } else {
+                        if (titleEl) titleEl.textContent = "Konfirmasi Tukar Posisi";
+                        if (textEl) {
+                            textEl.innerHTML = `
+                                <p class="mb-3">Anda akan menukar posisi jadwal:</p>
+                                <div class="flex items-center justify-center bg-gray-50 border border-gray-200 p-3 rounded-lg mb-3">
+                                    <span class="font-bold text-indigo-700 text-lg">${sCode}</span>
+                                    ${swapIcon}
+                                    <span class="font-bold text-indigo-700 text-lg">${tCode}</span>
+                                </div>
+                                <p>Pastikan kedua mesin kompatibel. Lanjutkan?</p>
+                            `;
+                        }
+                    }
+                } else {
+                    // Default / Standard Weekend logic
+                    if (titleEl) titleEl.textContent = "Konfirmasi Hari Libur";
+                    if (textEl) {
+                         textEl.innerHTML = `
+                            <p>Tanggal <span class="font-bold text-orange-600 bg-orange-50 px-1 rounded">${dateStr}</span> adalah hari libur (Akhir Pekan).</p>
+                            <p class="mt-2">Apakah Anda yakin ingin menjadwalkan produksi di hari ini?</p>
+                         `;
+                    }
+                }
             }
             
             if (action) {
@@ -1083,6 +1137,8 @@
                 updateScheduleSlotFromModal(true);
             } else if (pendingWeekendAction === 'move') {
                  processDropUpdate(true); 
+            } else if (pendingWeekendAction === 'swap') {
+                 executeSwap(); // New Swap Action
             }
             
             pendingWeekendAction = null;
@@ -1670,6 +1726,7 @@
         window.handleDrop = async function(event) {
             event.preventDefault();
             
+            // Clean visual styles
             if (event.currentTarget.tagName === 'TD') {
                 event.currentTarget.classList.remove('drag-over');
             }
@@ -1693,16 +1750,51 @@
             }
 
             const sourceItem = Object.values(scheduleData).find(item => item.id == sourceId);
+            // Drop on self check
             if (sourceItem && sourceItem.mesin === targetMachine && sourceItem.schedule_date === targetDate && sourceItem.schedule_shift === targetShift) {
                 return; 
             }
 
             const targetKey = `${targetMachine}|${targetDate}|${targetShift}`;
-            if (scheduleData[targetKey]) {
-                showMessage(`Gagal memindahkan: Slot ${targetMachine} ${targetShift} sudah terisi oleh ${scheduleData[targetKey].product_code}.`, "error");
+            const targetItem = scheduleData[targetKey];
+
+            // === LOGIKA BARU: SWAP DENGAN KONFIRMASI ===
+            if (targetItem) {
+                // Konfirmasi Swap (SELALU MUNCUL POPUP)
+                const sourceDateObj = new Date(sourceItem.schedule_date);
+                const targetDateObj = new Date(targetDate);
+                const isSourceWeekend = (sourceDateObj.getDay() === 0 || sourceDateObj.getDay() === 6);
+                const isTargetWeekend = (targetDateObj.getDay() === 0 || targetDateObj.getDay() === 6);
+
+                pendingSwapUpdate = {
+                    sourceId: sourceId,
+                    targetId: targetItem.id,
+                    sourceItem: sourceItem,
+                    targetItem: targetItem,
+                    targetCoordinates: {
+                        mesin: targetMachine,
+                        schedule_date: targetDate,
+                        schedule_shift: targetShift
+                    },
+                    sourceCoordinates: {
+                         mesin: sourceItem.mesin,
+                         schedule_date: sourceItem.schedule_date,
+                         schedule_shift: sourceItem.schedule_shift
+                    }
+                };
+
+                // Panggil Modal Konfirmasi dengan Detail Barang
+                toggleWeekendConfirmModal(true, 'swap', '', {
+                    isRisk: (isSourceWeekend || isTargetWeekend),
+                    source: sourceCode,
+                    target: targetItem.product_code
+                });
+                
+                draggedItemData = null;
                 return;
             }
 
+            // === LOGIKA LAMA: MOVE (KE SLOT KOSONG) ===
             const dateObj = new Date(targetDate);
             const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
             
@@ -1721,6 +1813,57 @@
             }
 
             draggedItemData = null; 
+        }
+
+        async function executeSwap() {
+            if (!pendingSwapUpdate) return;
+            
+            const { sourceId, targetId, sourceCoordinates, targetCoordinates } = pendingSwapUpdate;
+            
+            try {
+                // Update Source to Target Position
+                const updateSource = supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .update({
+                        mesin: targetCoordinates.mesin,
+                        schedule_date: targetCoordinates.schedule_date,
+                        schedule_shift: targetCoordinates.schedule_shift,
+                        timestamp: new Date().toISOString()
+                    })
+                    .eq('id', sourceId);
+
+                // Update Target to Source Position
+                const updateTarget = supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .update({
+                        mesin: sourceCoordinates.mesin,
+                        schedule_date: sourceCoordinates.schedule_date,
+                        schedule_shift: sourceCoordinates.schedule_shift,
+                        timestamp: new Date().toISOString()
+                    })
+                    .eq('id', targetId);
+
+                // Jalankan paralel
+                const [res1, res2] = await Promise.all([updateSource, updateTarget]);
+                
+                if (res1.error) throw res1.error;
+                if (res2.error) throw res2.error;
+
+                showMessage(`Berhasil menukar posisi jadwal!`, "info");
+                
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                
+                await fetchAllScheduleData();
+                if (start && end) {
+                    renderPlanningTable(start, end);
+                }
+            } catch (e) {
+                console.error("Error executing swap:", e);
+                showMessage("Gagal menukar jadwal. Cek koneksi.", "error");
+            } finally {
+                pendingSwapUpdate = null;
+            }
         }
 
         async function processDropUpdate(forceWeekend = false) {
