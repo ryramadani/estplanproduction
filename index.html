@@ -489,10 +489,20 @@
         <div id="masterView" class="view-content hidden">
             <div id="masterTableContainer">
                 <div class="mt-10 pt-4 border-t border-gray-200">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-3">
-                        Data Master Produksi Tersimpan
-                        <span id="masterDataTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
-                    </h2>
+                    <!-- UBAH: Header dibuat Flex untuk menampung tombol Export -->
+                    <div class="flex justify-between items-center mb-3">
+                        <h2 class="text-xl font-semibold text-gray-800">
+                            Data Master Produksi Tersimpan
+                            <span id="masterDataTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
+                        </h2>
+                        <!-- TAMBAH: Tombol Export Excel untuk Data Master Produksi -->
+                        <button onclick="exportProductionMasterToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export Excel
+                        </button>
+                    </div>
 
                     <div class="mb-4 relative">
                         <input type="text" id="masterSearchInput" placeholder="Cari Kode, Nama Komponen, atau Mesin..."
@@ -2523,10 +2533,37 @@
             }
         }
 
+        // --- Improved Initialization Logic ---
+        
+        // Helper untuk mencoba fetch ulang jika gagal
+        async function fetchWithRetry(fn, retries = 3, delay = 1000) {
+            try {
+                return await fn();
+            } catch (err) {
+                if (retries <= 0) throw err;
+                await new Promise(res => setTimeout(res, delay));
+                return fetchWithRetry(fn, retries - 1, delay * 1.5); // Exponential backoff
+            }
+        }
+
         window.onload = async function() {
             try {
+                if (!window.supabase) {
+                     throw new Error("SDK Supabase tidak dimuat. Cek koneksi internet anda.");
+                }
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                setupApp();
+                
+                // 1. Cek koneksi sederhana dulu sebelum lanjut
+                // Menggunakan fetchWithRetry untuk ketahanan terhadap network glitch
+                await fetchWithRetry(async () => {
+                     const { error } = await supabase.from(TABLE_NAME).select('id').limit(1);
+                     if (error) throw error;
+                });
+
+                // 2. Setup App (termasuk fetch data utama) dan tunggu sampai selesai
+                await setupApp();
+
+                // 3. Tampilkan pesan sukses hanya jika semua di atas berhasil
                 showMessage("Koneksi Supabase Berhasil! (Menggunakan data 'production_rates')", "info");
                 showView('estimation'); 
 
@@ -2535,11 +2572,14 @@
 
                 let errorMessage;
                 if (error.message && error.message.includes("Failed to fetch")) {
-                    errorMessage = "Gagal terhubung ke Supabase. Cek apakah RLS/CORS di Supabase diatur dengan tepat.";
+                    errorMessage = "Gagal terhubung ke Supabase. Cek koneksi internet atau apakah Project Supabase sedang 'Paused'.";
                 } else {
                     errorMessage = `Gagal menginisialisasi Supabase: ${error.message}`;
                 }
                 showMessage(errorMessage, "error");
+                
+                // Fallback: Tetap coba tampilkan view meskipun error (agar UI tidak blank)
+                showView('estimation');
             }
         }
 
@@ -2559,9 +2599,11 @@
             }, 5000);
         }
 
-        function setupApp() {
+        async function setupApp() {
             setupCapacityListener(); 
-            listenForProductionData();
+            
+            // Tunggu data produksi dimuat
+            await listenForProductionData();
 
             const prodForm = document.getElementById('productionDataForm');
             if (prodForm) {
@@ -2608,6 +2650,32 @@
             
             // Inisialisasi dengan 1 baris input
             addInputRow();
+        }
+
+        async function listenForProductionData() {
+            if (!supabase) return;
+
+            try {
+                // Gunakan await untuk memastikan data didapat sebelum lanjut
+                const { data, error } = await supabase.from(TABLE_NAME).select('*');
+                
+                if (error) throw error;
+                
+                processSupabaseData(data);
+
+                // Setup realtime subscription
+                supabase.channel('public:production_rates')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME }, (payload) => {
+                        supabase.from(TABLE_NAME).select('*').then(({ data: newData }) => {
+                            processSupabaseData(newData);
+                        });
+                    })
+                    .subscribe();
+
+            } catch (err) {
+                console.error("Supabase connection error in listenForProductionData:", err);
+                throw err; // Lempar error ke atas agar ditangkap window.onload
+            }
         }
         
         // === NEW: Dynamic Input Row Functions ===
@@ -2770,38 +2838,7 @@
             showView('estimation');
         }
 
-        function listenForProductionData() {
-            if (!supabase) return;
-
-            supabase
-                .from(TABLE_NAME)
-                .select('*')
-                .then(({ data, error }) => {
-                    if (error) {
-                        console.error("Supabase initial fetch error:", error);
-                        if (error.code && (error.code === '401' || error.code === '403')) {
-                             showMessage("Gagal memuat data. Cek pengaturan RLS (Row Level Security) di Supabase.", "error");
-                        } else {
-                             showMessage("Gagal memuat data awal dari Supabase.", "error");
-                        }
-                        return;
-                    }
-                    processSupabaseData(data);
-
-                    supabase.channel('public:production_rates')
-                        .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME }, (payload) => {
-                            supabase.from(TABLE_NAME).select('*').then(({ data: newData }) => {
-                                processSupabaseData(newData);
-                            });
-                        })
-                        .subscribe();
-
-                })
-                .catch(err => {
-                    console.error("Supabase connection error:", err);
-                    showMessage("Kesalahan koneksi saat memuat data dari Supabase.", "error");
-                });
-        }
+        // --- end of listenForProductionData and processSupabaseData which are now handled above ---
 
         function processSupabaseData(data) {
             const newProductionData = {};
@@ -3951,6 +3988,86 @@
 
             } catch (e) {
                 console.error("Gagal mengekspor Master Jadwal Excel:", e);
+                showMessage("Terjadi kesalahan saat membuat file Excel.", "error");
+            }
+        }
+
+        // --- FUNGSI BARU: Export Data Master Produksi ke Excel ---
+        window.exportProductionMasterToExcel = function() {
+            if (typeof XLSX === 'undefined') {
+                showMessage("Library Excel (xlsx.js) belum dimuat. Coba refresh halaman.", "error");
+                return;
+            }
+
+            // Ambil query pencarian saat ini agar hasil export sesuai filter
+            const searchQuery = document.getElementById('masterSearchInput').value.toLowerCase();
+            const dataArray = Object.values(productionData);
+
+            if (dataArray.length === 0) {
+                showMessage("Tidak ada data produksi tersimpan untuk diekspor.", "error");
+                return;
+            }
+
+            // Filter data sesuai tampilan
+            const filteredData = dataArray.filter(data => {
+                if (!searchQuery) return true;
+                return (
+                    data.code.toLowerCase().includes(searchQuery) ||
+                    data.name.toLowerCase().includes(searchQuery) ||
+                    data.machine.toLowerCase().includes(searchQuery) ||
+                    (data.machine_optional && data.machine_optional.toLowerCase().includes(searchQuery))
+                );
+            });
+
+            if (filteredData.length === 0) {
+                showMessage("Tidak ada data yang cocok dengan pencarian untuk diekspor.", "error");
+                return;
+            }
+
+            // Urutkan berdasarkan Kode Barang (A-Z) agar rapi
+            filteredData.sort((a, b) => a.code.localeCompare(b.code));
+
+            showMessage("Mempersiapkan data Excel Data Master...", "info");
+
+            // Map data ke format Excel yang rapi
+            const dataForExcel = filteredData.map((data, index) => {
+                const capacity3ShiftPcs = data.targetPerShift * 3; // Hitung ulang kapasitas
+                return {
+                    "NO": index + 1,
+                    "KODE BARANG": data.code,
+                    "NAMA KOMPONEN / PRODUK": data.name,
+                    "MESIN UTAMA": data.machine,
+                    "MESIN (OPTIONAL)": data.machine_optional || '-',
+                    "ISI DUS (PCS)": data.pcs_per_box,
+                    "TARGET 1 SHIFT (PCS)": data.targetPerShift,
+                    "KAPASITAS 3 SHIFT (PCS)": capacity3ShiftPcs
+                };
+            });
+
+            try {
+                // Buat Workbook dan Worksheet baru
+                const ws = XLSX.utils.json_to_sheet(dataForExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Master Produksi");
+
+                // Atur lebar kolom agar mudah dibaca
+                ws['!cols'] = [
+                    { wch: 5 },  // No
+                    { wch: 15 }, // Kode
+                    { wch: 35 }, // Nama
+                    { wch: 15 }, // Mesin Utama
+                    { wch: 20 }, // Mesin Optional
+                    { wch: 12 }, // Isi Dus
+                    { wch: 20 }, // Target
+                    { wch: 22 }  // Kapasitas
+                ];
+
+                const fileName = `Data_Master_Produksi_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+                showMessage("File Excel berhasil diunduh!", "info");
+
+            } catch (e) {
+                console.error("Gagal mengekspor Data Master Excel:", e);
                 showMessage("Terjadi kesalahan saat membuat file Excel.", "error");
             }
         }
