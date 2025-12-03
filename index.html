@@ -117,6 +117,17 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        /* Style tombol tambah (+) di tabel */
+        .add-slot-btn {
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        td:hover .add-slot-btn {
+            opacity: 1;
+            transform: scale(1);
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen">
@@ -216,7 +227,6 @@
                     <input type="text" id="capacity3Shift" readonly value="Otomatis Terisi" class="w-full p-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 shadow-inner">
                 </div>
 
-                <!-- UBAH: Menambahkan 'justify-center' untuk menengahkan tombol -->
                 <div class="sm:col-span-2 lg:col-span-4 pt-2 flex justify-center space-x-3">
                     <button type="submit" id="submitButton" class="w-auto px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg transition duration-300 ease-in-out shadow-md hover:shadow-lg flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -235,9 +245,7 @@
         <!-- VIEW 1: ESTIMASI PRODUKSI (DEFAULT) -->
         <div id="estimationView" class="view-content">
 
-            <!-- UBAH: Mengganti 'bg-indigo-50 border-indigo-200' menjadi 'bg-white border-gray-200 shadow-sm' agar lebih netral -->
             <div id="estimationFormContainer" class="mb-8 p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <!-- UBAH: Mengganti text-indigo-900 menjadi text-gray-800 -->
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-indigo-600" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
@@ -257,7 +265,6 @@
                         Tambah Produk Lain
                     </button>
 
-                    <!-- UBAH: Ganti 'w-full sm:w-auto' menjadi 'w-auto px-8' agar lebarnya menyesuaikan teks -->
                     <button onclick="calculateEstimation()" class="w-auto px-8 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition duration-300 ease-in-out transform hover:scale-[1.01] shadow-lg shadow-indigo-500/50 flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
@@ -628,6 +635,58 @@
             </form>
         </div>
     </div>
+    
+    <!-- Modal Add Slot Jadwal (NEW) -->
+    <div id="scheduleAddModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-2xl">
+            <h3 class="text-xl font-bold mb-4 text-indigo-700">Tambah Jadwal Baru</h3>
+            <form onsubmit="event.preventDefault(); saveScheduleSlotFromModal(false);" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                
+                <div>
+                    <label for="addScheduleMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
+                    <select id="addScheduleMachine" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" onchange="checkSlotAvailability_AddModal()"></select>
+                </div>
+                <div>
+                    <label for="addScheduleDate" class="block text-sm font-medium text-gray-700">Tanggal</label>
+                    <input type="text" id="addScheduleDate" placeholder="DD/MM/YYYY" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" maxlength="10" oninput="formatDateInput(this)" onblur="checkSlotAvailability_AddModal()">
+                </div>
+                <div>
+                    <label for="addScheduleShift" class="block text-sm font-medium text-gray-700">Shift</label>
+                    <select id="addScheduleShift" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" onchange="checkSlotAvailability_AddModal()">
+                        <option value="Shift 1">Shift 1</option>
+                        <option value="Shift 2">Shift 2</option>
+                        <option value="Shift 3">Shift 3</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="addScheduleCode" class="block text-sm font-medium text-gray-700">Kode Barang</label>
+                    <input type="text" id="addScheduleCode" placeholder="Kode Brg" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm uppercase-input" oninput="this.value = this.value.toUpperCase()" onblur="findProductNameByCode_AddModal()">
+                </div>
+                 
+                 <div>
+                    <label for="addScheduleQty" class="block text-sm font-medium text-gray-700">Jml Order (Dus)</label>
+                    <input type="number" id="addScheduleQty" placeholder="0" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm">
+                </div>
+
+                <div class="sm:col-span-2"> 
+                     <label for="addScheduleName" class="block text-sm font-medium text-gray-700">Nama Komponen</label>
+                     <select id="addScheduleName" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm" onchange="handleComponentSelectionChange_AddModal()">
+                        <option value="" disabled selected>Otomatis (Isi Kode)</option>
+                     </select>
+                </div>
+                <p id="addSlotStatusMessage" class="sm:col-span-2 text-sm font-bold mt-2 text-center"></p>
+                <div class="sm:col-span-2 flex justify-end space-x-3 mt-4">
+                    <button type="button" onclick="toggleScheduleAddModal(false)" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-150">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-150">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Simpan Jadwal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal Hapus Multi -->
     <div id="scheduleMultiDeleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center modal-overlay">
@@ -783,6 +842,31 @@
              const d = date.getDate().toString().padStart(2, '0');
              return `${y}-${m}-${d}`;
         }
+        
+        // --- Helper Functions for UI State ---
+        function updateDeleteSelectedButtonState() {
+            const container = document.getElementById('deleteSelectedScheduleContainer');
+            const countSpan = document.getElementById('selectedScheduleCount');
+            
+            if (isLoggedIn && selectedScheduleIds.size > 0) {
+                container.classList.remove('hidden');
+                countSpan.textContent = selectedScheduleIds.size;
+            } else {
+                container.classList.add('hidden');
+                countSpan.textContent = 0;
+            }
+        }
+        
+        function updateDeleteButtonsVisibility() {
+            const container = document.getElementById('inputRowsContainer');
+            const buttons = container.querySelectorAll('button');
+            
+            if (container.children.length === 1) {
+                buttons.forEach(btn => btn.classList.add('hidden'));
+            } else {
+                buttons.forEach(btn => btn.classList.remove('hidden'));
+            }
+        }
 
         window.showView = function(viewName) {
             const views = ['estimation', 'planning', 'master'];
@@ -856,6 +940,153 @@
             }
         }
 
+        // --- GLOBAL HELPER FUNCTIONS & LISTENERS ---
+        // Pindahkan ke atas untuk menghindari ReferenceError saat dipanggil setupApp
+        
+        function setupCapacityListener() {
+            const targetInput = document.getElementById('inputTargetPerShift');
+            const capacityOutput = document.getElementById('capacity3Shift');
+            const pcsPerBoxInput = document.getElementById('inputPcsPerBox');
+
+            if (!targetInput || !capacityOutput || !pcsPerBoxInput) {
+                return; 
+            }
+
+            const updateCapacity = () => {
+                const target = cleanInt(targetInput.value);
+
+                if (target > 0) {
+                    const capacity = target * SHIFTS_PER_DAY;
+                    capacityOutput.value = capacity.toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' pcs';
+                } else {
+                    capacityOutput.value = 'Otomatis Terisi';
+                }
+            };
+
+            targetInput.addEventListener('input', updateCapacity);
+            pcsPerBoxInput.addEventListener('input', () => { });
+        }
+
+        function populateProductDatalist() {
+            const datalist = document.getElementById('productCodeList');
+            datalist.innerHTML = '';
+
+            const uniqueCodes = {};
+            for (const id in productionData) {
+                const data = productionData[id];
+                if (!uniqueCodes[data.code]) {
+                     uniqueCodes[data.code] = true;
+                     const option = document.createElement('option');
+                     option.value = data.code;
+                     option.textContent = `${data.code} - ${data.name} (${data.machine}) [Target 1 Shift: ${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })} pcs]`;
+                     datalist.appendChild(option);
+                }
+            }
+        }
+
+        function renderRateTable(searchQuery = '') {
+            const container = document.getElementById('rateTableContainer');
+            const dataArray = Object.values(productionData);
+            const totalCountSpan = document.getElementById('masterDataTotalCount');
+
+            if (dataArray.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 p-4">Belum ada data produksi yang tersimpan. Silakan tambahkan data menggunakan formulir di halaman Estimasi Produksi (setelah login admin).</p>';
+                return;
+            }
+
+            const filteredData = dataArray.filter(data => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                    data.code.toLowerCase().includes(query) ||
+                    data.name.toLowerCase().includes(query) ||
+                    data.machine.toLowerCase().includes(query) ||
+                    (data.machine_optional && data.machine_optional.toLowerCase().includes(query))
+                );
+            });
+
+            if (totalCountSpan) {
+                if (searchQuery) {
+                    totalCountSpan.textContent = `(Menampilkan ${filteredData.length} dari ${dataArray.length} total)`;
+                } else {
+                    totalCountSpan.textContent = `(${dataArray.length} Total)`;
+                }
+            }
+
+            filteredData.sort((a, b) => a.code.localeCompare(b.code));
+
+            if (filteredData.length === 0 && searchQuery) {
+                container.innerHTML = `<p class="text-gray-500 p-4">Tidak ada hasil ditemukan untuk "${searchQuery}".</p>`;
+                return;
+            }
+
+            const actionHeader = isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : '';
+
+            let tableHTML = `
+                <table class="min-w-full bg-white border border-gray-200">
+                    <thead class="sticky top-0 bg-gray-100 z-10">
+                        <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            <th class="py-3 px-4 border-b w-12 text-center">#</th>
+                            <th class="py-3 px-4 border-b">Kode Barang</th>
+                            <th class="py-3 px-4 border-b">Nama Komponen / Produk</th>
+                            <th class="py-3 px-4 border-b">Mesin Utama</th>
+                            <th class="py-3 px-4 border-b">Mesin (Optional)</th>
+                            <th class="py-3 px-4 border-b text-right">Isi Dus (pcs)</th>
+                            <th class="py-3 px-4 border-b text-right">Target 1 Shift (pcs)</th>
+                            <th class="py-3 px-4 border-b text-right font-bold text-red-600">Kapasitas 3 Shift (pcs)</th>
+                            ${actionHeader}
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            filteredData.forEach((data, index) => {
+                const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
+                const capacity3ShiftPcs = data.targetPerShift * SHIFTS_PER_DAY;
+
+                const actionButtons = isLoggedIn ? `
+                    <td class="py-3 px-4 text-center whitespace-nowrap space-x-2 ${rowClass}">
+                        <button onclick="startEditData('${data.id}')"
+                                class="text-indigo-500 hover:text-indigo-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50 transform hover:scale-105"
+                                title="Edit Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+
+                        <button onclick="prepareDelete('${data.id}')"
+                                class="text-red-500 hover:text-red-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-red-50 transform hover:scale-105"
+                                title="Hapus Data">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                            </svg>
+                        </button>
+                    </td>
+                ` : '';
+
+                tableHTML += `
+                    <tr class="border-b hover:bg-gray-100 ${rowClass}">
+                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
+                        <td class="py-3 px-4 text-gray-800 font-mono whitespace-nowrap">${data.code}</td>
+                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.name}</td>
+                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine}</td>
+                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine_optional || 'N/A'}</td>
+                        <td class="py-3 px-4 text-right">${data.pcs_per_box.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        <td class="py-3 px-4 text-right">${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        <td class="py-3 px-4 text-right font-bold text-red-700">${capacity3ShiftPcs.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        ${actionButtons}
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                    </tbody>
+                </table>
+            `;
+            container.innerHTML = tableHTML;
+        }
+
         function groupProductionDataByMachine() {
             const machineData = {};
 
@@ -888,7 +1119,8 @@
         function populateMachineDropdowns() {
             const selects = [
                 document.getElementById('inputScheduleMachine'),
-                document.getElementById('modalScheduleMachine') 
+                document.getElementById('modalScheduleMachine'),
+                document.getElementById('addScheduleMachine') 
             ];
             const groupedMachines = groupProductionDataByMachine();
 
@@ -1086,6 +1318,222 @@
                 showMessage(errorMessage, "error");
             }
         }
+        
+        // --- NEW: Toggle & Logic for Add Schedule Modal ---
+        window.toggleScheduleAddModal = function(show) {
+             const modal = document.getElementById('scheduleAddModal');
+             if (modal) modal.classList.toggle('hidden', !show);
+        }
+
+        window.openAddScheduleModal = function(machineName, dateStr, shift) {
+            const dateParts = dateStr.split('-');
+            const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+            document.getElementById('addScheduleMachine').value = machineName;
+            document.getElementById('addScheduleDate').value = displayDate;
+            document.getElementById('addScheduleShift').value = shift;
+            
+            // Reset fields
+            document.getElementById('addScheduleCode').value = '';
+            document.getElementById('addScheduleQty').value = '';
+            document.getElementById('addScheduleName').innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
+            document.getElementById('addSlotStatusMessage').textContent = '';
+
+            toggleScheduleAddModal(true);
+            checkSlotAvailability_AddModal();
+        }
+
+        window.findProductNameByCode_AddModal = function() {
+            const codeInput = document.getElementById('addScheduleCode');
+            const nameDropdown = document.getElementById('addScheduleName'); 
+            const code = codeInput.value.trim().toUpperCase();
+
+            nameDropdown.innerHTML = '';
+
+            if (!code) {
+                nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
+                checkSlotAvailability_AddModal(null);
+                return;
+            }
+
+            const matchingProducts = Object.values(productionData).filter(p => p.code === code);
+
+            if (matchingProducts.length > 0) {
+                if (matchingProducts.length > 1) {
+                     nameDropdown.innerHTML = '<option value="" disabled selected>Pilih Komponen...</option>';
+                }
+
+                matchingProducts.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.name; 
+                    option.textContent = product.name; 
+                    nameDropdown.appendChild(option);
+                });
+
+                if (matchingProducts.length === 1) {
+                     nameDropdown.value = matchingProducts[0].name;
+                     handleComponentSelectionChange_AddModal();
+                }
+            } else {
+                nameDropdown.innerHTML = '<option value="" disabled>Kode tidak ditemukan</option>';
+                checkSlotAvailability_AddModal(null);
+            }
+        }
+
+        window.handleComponentSelectionChange_AddModal = function() {
+            const code = document.getElementById('addScheduleCode').value.trim().toUpperCase();
+            const componentName = document.getElementById('addScheduleName').value;
+
+            if (!code || !componentName) {
+                checkSlotAvailability_AddModal(null);
+                return;
+            }
+            
+            const product = Object.values(productionData).find(p => p.code === code && p.name === componentName);
+            checkSlotAvailability_AddModal(product);
+        }
+
+        window.checkSlotAvailability_AddModal = async function(productData = null) {
+            const messageEl = document.getElementById('addSlotStatusMessage');
+            if (!messageEl) return;
+
+            const machineDropdown = document.getElementById('addScheduleMachine');
+            const dateStr = document.getElementById('addScheduleDate').value;
+            const shift = document.getElementById('addScheduleShift').value;
+            const codeInput = document.getElementById('addScheduleCode');
+            const code = codeInput.value.trim().toUpperCase();
+
+            if (!isLoggedIn || !code || !dateStr || !shift) {
+                messageEl.textContent = ''; return;
+            }
+
+            const parsedDate = parseDMY(dateStr);
+            if (!parsedDate) {
+                 messageEl.textContent = 'Format Tanggal Salah';
+                 messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
+                 return;
+            }
+            const dbDate = formatDateToYMD(parsedDate);
+
+             if (!productData) {
+                 const componentName = document.getElementById('addScheduleName').value;
+                 if(componentName) {
+                    productData = Object.values(productionData).find(p => p.code === code && p.name === componentName);
+                 } else {
+                    productData = Object.values(productionData).find(p => p.code === code);
+                 }
+            }
+
+            if (!productData) {
+                 messageEl.textContent = ''; 
+                 return;
+            }
+            
+            // Check if selected machine is valid for this product
+            const machinesToCheck = [];
+            if (productData.machine) machinesToCheck.push(productData.machine);
+            if (productData.machine_optional) {
+                productData.machine_optional.split(',').map(m => m.trim().toUpperCase()).filter(m => m && !machinesToCheck.includes(m)).forEach(m => machinesToCheck.push(m));
+            }
+            
+            const selectedMachine = machineDropdown.value;
+            let statusMessage = '';
+            let messageColor = '';
+            
+            if (!machinesToCheck.includes(selectedMachine)) {
+                 statusMessage = `Peringatan: Produk ini biasanya diproses di ${machinesToCheck.join(', ')}`;
+                 messageColor = 'text-orange-600';
+            } else {
+                 statusMessage = 'Produk kompatibel dengan mesin ini.';
+                 messageColor = 'text-green-600';
+            }
+            
+            // Final check: Is slot empty?
+            const key = `${selectedMachine}|${dbDate}|${shift}`;
+            const scheduleItem = scheduleData[key];
+            
+            if (scheduleItem) {
+                statusMessage = "SLOT SUDAH TERISI!";
+                messageColor = 'text-red-600';
+            }
+
+            messageEl.textContent = statusMessage;
+            messageEl.className = `text-sm font-bold mt-3 text-center ${messageColor}`;
+        }
+
+        window.saveScheduleSlotFromModal = async function(forceWeekend = false) {
+             if (!isLoggedIn) {
+                showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
+                return;
+            }
+            
+            const machine = document.getElementById('addScheduleMachine').value;
+            const dateStr = document.getElementById('addScheduleDate').value;
+            const shift = document.getElementById('addScheduleShift').value;
+            const code = document.getElementById('addScheduleCode').value.trim();
+            const name = document.getElementById('addScheduleName').value;
+            const qty = document.getElementById('addScheduleQty').value;
+
+            if (!machine || !dateStr || !shift || !code) {
+                 showMessage("Data tidak lengkap.", "error");
+                 return;
+            }
+
+            const parsedDate = parseDMY(dateStr);
+            if (!parsedDate) {
+                 showMessage("Format Tanggal tidak valid.", "error");
+                 return;
+            }
+
+            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
+            if (isWeekend && !forceWeekend) {
+                toggleWeekendConfirmModal(true, 'add_modal', dateStr);
+                return;
+            }
+
+            const dbDate = formatDateToYMD(parsedDate);
+            const key = `${machine}|${dbDate}|${shift}`;
+            
+            if (scheduleData[key]) {
+                 showMessage("Gagal: Slot sudah terisi.", "error");
+                 return;
+            }
+
+            const dataToSave = {
+                mesin: machine, 
+                schedule_date: dbDate, 
+                schedule_shift: shift,
+                product_code: code,
+                product_name: name,
+                order_qty: qty, 
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const { error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .insert([dataToSave])
+                    .select();
+
+                if (error) throw error;
+
+                showMessage(`Jadwal baru berhasil ditambahkan!`, "info");
+                toggleScheduleAddModal(false);
+
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                
+                await fetchAllScheduleData(); 
+                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
+                if (start && end) {
+                    renderPlanningTable(start, end);
+                }
+
+            } catch (e) {
+                console.error("Error saving new schedule slot:", e);
+                showMessage(`Gagal menyimpan: ${e.message}`, "error");
+            }
+        }
 
         window.toggleWeekendConfirmModal = function(show, action = null, dateStr = '', details = null) {
             const modal = document.getElementById('weekendConfirmModal');
@@ -1164,6 +1612,8 @@
                  processDropUpdate(true); 
             } else if (pendingWeekendAction === 'swap') {
                  executeSwap(); // New Swap Action
+            } else if (pendingWeekendAction === 'add_modal') {
+                 saveScheduleSlotFromModal(true);
             }
             
             pendingWeekendAction = null;
@@ -2136,8 +2586,24 @@
                                     textClass = 'text-red-700 font-bold'; 
                                 }
                                 else {
-                                    slotContent = 'Slot Kosong';
-                                    textClass = 'text-gray-400';
+                                    if (isLoggedIn) {
+                                        slotContent = `
+                                            <div class="group relative w-full h-full flex flex-col items-center justify-center">
+                                                <span class="text-gray-300 group-hover:hidden text-[10px]">Kosong</span>
+                                                <button onclick="openAddScheduleModal('${machineName}', '${d.dbDate}', '${shift}')" 
+                                                        class="add-slot-btn hidden group-hover:flex bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full w-8 h-8 items-center justify-center shadow-sm border border-indigo-200"
+                                                        title="Tambah Jadwal">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        `;
+                                        textClass = 'p-0 align-middle'; 
+                                    } else {
+                                        slotContent = 'Slot Kosong';
+                                        textClass = 'text-gray-400';
+                                    }
                                 }
 
                                 return `
@@ -2185,76 +2651,854 @@
             }
         };
 
-        async function fetchScheduleData(startDateStr, endDateStr) {
-            if (!supabase) return;
+        // --- NEW: Dynamic Input Row Functions WITH SHIFT SELECTION ---
+        window.addInputRow = function() {
+            const container = document.getElementById('inputRowsContainer');
+            const rowId = 'input-row-' + Date.now();
+            
+            const div = document.createElement('div');
+            div.id = rowId;
+            // Layout updated to accommodate Shift Selection: 4 col Code, 3 col Qty, 3 col Shift, 2 col Delete
+            div.className = 'product-input-row grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 bg-white rounded-lg border border-indigo-100 shadow-sm';
+            
+            const isFirstRow = container.children.length === 0;
+            
+            div.innerHTML = `
+                <div class="md:col-span-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode Produk</label>
+                    <input type="text" class="product-code-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm uppercase-input" placeholder="Masukkan Kode Barang" list="productCodeList" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pesanan (Dus)</label>
+                    <input type="number" class="order-qty-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm" placeholder="Contoh: 1500" min="1">
+                </div>
+                <!-- NEW: START SHIFT SELECTION -->
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mulai Shift</label>
+                    <select class="start-shift-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm text-sm">
+                        <option value="auto" selected>Otomatis (Bebas)</option>
+                        <option value="Shift 1">Shift 1</option>
+                        <option value="Shift 2">Shift 2</option>
+                        <option value="Shift 3">Shift 3</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                    <button onclick="removeInputRow('${rowId}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition duration-150 ${isFirstRow ? 'hidden' : ''}" title="Hapus Baris">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(div);
+            updateDeleteButtonsVisibility();
+        }
 
-            const startDateParsed = parseDMY(startDateStr);
-            const endDateParsed = parseDMY(endDateStr);
-
-            if (!startDateParsed || !endDateParsed) {
-                console.error("Format tanggal tidak valid saat memanggil fetchScheduleData");
-                scheduleData = {}; 
-                return; 
+        window.removeInputRow = function(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateDeleteButtonsVisibility();
             }
+        }
 
-            const startDb = formatDateToYMD(startDateParsed);
-            const endDb = formatDateToYMD(endDateParsed);
+        // --- UPDATE: calculateEstimation to Capture Start Shift Preference ---
+        window.calculateEstimation = function() {
+            const container = document.getElementById('inputRowsContainer');
+            const rows = container.querySelectorAll('.product-input-row');
+            
+            const componentSelectionPanel = document.getElementById('componentSelectionContainer');
+            componentSelectionPanel.classList.add('hidden');
+            document.getElementById('componentSelectionList').innerHTML = ''; 
 
-            try {
-                const { data, error } = await supabase
-                    .from(SCHEDULE_TABLE_NAME)
-                    .select('*')
-                    .gte('schedule_date', startDb)
-                    .lte('schedule_date', endDb);
+            const estimationMachineTracker = {}; 
+            let longestShiftNet = 0; 
+            let combinedDetailsHTML = '';
+            const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const integerFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
+            
+            pendingScheduleComponents = []; 
+            let hasError = false;
+            let anyProductFound = false;
+            
+            for (let i = 0; i < rows.length; i++) {
+                const row = rows[i];
+                const codeInput = row.querySelector('.product-code-input');
+                const qtyInput = row.querySelector('.order-qty-input');
+                const startShiftInput = row.querySelector('.start-shift-input'); // Get select element
+                
+                const code = codeInput.value.trim();
+                const orderQtyDus = cleanInt(qtyInput.value);
+                const startShiftPref = startShiftInput ? startShiftInput.value : 'auto'; // Capture Value
+                
+                if (!code) continue; 
+                
+                if (orderQtyDus <= 0) {
+                     showMessage(`Baris ke-${i+1}: Jumlah Pesanan harus valid (angka positif).`, "error");
+                     hasError = true;
+                     continue;
+                }
+                
+                const matchingProducts = Object.values(productionData).filter(data => data.code === code);
+                
+                if (matchingProducts.length === 0) {
+                     showMessage(`Baris ke-${i+1}: Kode Produk "${code}" tidak ditemukan.`, "error");
+                     hasError = true;
+                     continue;
+                }
+                
+                anyProductFound = true;
+                
+                // --- Display Logic for Shift Preference in Estimation Detail ---
+                let shiftPrefLabel = `<span class="text-gray-500 font-normal ml-2 text-xs">(Mulai: Otomatis)</span>`;
+                if(startShiftPref !== 'auto') {
+                    shiftPrefLabel = `<span class="text-indigo-600 font-bold ml-2 text-xs">(Mulai: ${startShiftPref})</span>`;
+                }
 
-                if (error) throw error;
+                combinedDetailsHTML += `
+                <div class="mb-6 border-b pb-4 border-gray-300">
+                    <h4 class="text-lg font-semibold text-indigo-800 mb-2 flex items-center flex-wrap">
+                        <span class="bg-indigo-100 text-indigo-800 py-1 px-2 rounded text-sm mr-2">Input #${i+1}</span>
+                        Kode: ${code} (Qty: ${integerFormatter.format(orderQtyDus)} Dus)
+                        ${shiftPrefLabel}
+                    </h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm text-xs">
+                            <thead>
+                                <tr class="bg-gray-100 text-left text-gray-600 uppercase tracking-wider">
+                                    <th class="py-2 px-3 border-b">Komponen/Mesin</th>
+                                    <th class="py-2 px-3 border-b text-right">Isi Dus</th>
+                                    <th class="py-2 px-3 border-b text-right">Total Pcs</th>
+                                    <th class="py-2 px-3 border-b text-right">Target Shift</th>
+                                    <th class="py-2 px-3 border-b text-right">Jam Butuh</th>
+                                    <th class="py-2 px-3 border-b text-right">Shift Butuh</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                matchingProducts.forEach((product, index) => {
+                    const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
 
-                const newScheduleData = {};
-                data.forEach(item => {
-                    const key = `${item.mesin}|${item.schedule_date}|${item.schedule_shift}`;
-                    newScheduleData[key] = item;
+                    const pcsPerBox = product.pcs_per_box;
+                    const totalPcsOrdered = orderQtyDus * pcsPerBox;
+                    const targetPerShiftPcs = product.targetPerShift;
+                    
+                    const shiftNet = totalPcsOrdered / targetPerShiftPcs;
+                    const hoursNet = shiftNet * HOURS_PER_SHIFT;
+
+                    const machine = product.machine;
+                    const lastBusyShiftNet = estimationMachineTracker[machine] || 0;
+                    
+                    estimationMachineTracker[machine] = lastBusyShiftNet + shiftNet;
+                    
+                    const formattedHoursMinutes = formatHoursMinutes(hoursNet);
+
+                    pendingScheduleComponents.push({
+                        productCode: product.code,
+                        productName: product.name, 
+                        machine: product.machine,
+                        machine_optional: product.machine_optional, 
+                        shiftNet: shiftNet,
+                        orderQty: orderQtyDus,
+                        startShiftPreference: startShiftPref // Store Preference in Object
+                    });
+
+                    combinedDetailsHTML += `
+                        <tr class="border-b hover:bg-gray-100 ${rowClass}">
+                            <td class="py-2 px-3 text-gray-700"><strong>${product.name}</strong> (${product.machine})</td>
+                            <td class="py-2 px-3 text-right">${integerFormatter.format(pcsPerBox)}</td>
+                            <td class="py-2 px-3 text-right font-bold">${integerFormatter.format(totalPcsOrdered)}</td>
+                            <td class="py-2 px-3 text-right">${integerFormatter.format(targetPerShiftPcs)}</td>
+                            <td class="py-2 px-3 text-right font-medium text-red-600">${formattedHoursMinutes}</td>
+                            <td class="py-2 px-3 text-right font-medium text-blue-600">
+                                ${decimalFormatter.format(shiftNet)}
+                            </td>
+                        </tr>
+                    `;
                 });
-                scheduleData = newScheduleData;
+                
+                combinedDetailsHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                `;
+            }
 
-            } catch (e) {
-                console.error("Error fetching schedule data:", e);
-                scheduleData = {}; 
-                if (e.message && e.message.includes("Could not find the table")) {
-                    showMessage(`Gagal memuat: Tabel '${SCHEDULE_TABLE_NAME}' tidak ditemukan di Supabase. Mohon buat tabel tersebut.`, "error");
+            if (hasError || !anyProductFound) {
+                if(!anyProductFound && !hasError) showMessage("Mohon masukkan minimal satu produk yang valid.", "error");
+                document.getElementById('results').classList.add('hidden');
+                document.getElementById('autoSchedulePanel').classList.add('hidden');
+                return;
+            }
+
+            for (const machine in estimationMachineTracker) {
+                if (estimationMachineTracker[machine] > longestShiftNet) {
+                    longestShiftNet = estimationMachineTracker[machine];
+                }
+            }
+
+            const totalShiftsBooked = Math.ceil(longestShiftNet);
+            const totalHoursNet = longestShiftNet * HOURS_PER_SHIFT;
+            const totalHoursBooked = Math.round(totalHoursNet);
+            const totalDaysCalculated = totalShiftsBooked / SHIFTS_PER_DAY;
+            const totalDaysBooked = Math.ceil(totalDaysCalculated);
+            const formattedTotalHoursNet = formatHoursMinutes(totalHoursNet);
+
+            const pdfButton = document.getElementById('exportPdfButton');
+            if (isLoggedIn) {
+                pdfButton.classList.remove('hidden');
+            } else {
+                pdfButton.classList.add('hidden');
+            }
+
+            document.getElementById('resultHours').textContent = `${integerFormatter.format(totalHoursBooked)} Jam`;
+            document.getElementById('resultShifts').textContent = `${totalShiftsBooked} Shift`;
+            document.getElementById('resultDays').textContent = `${totalDaysBooked} Hari`;
+
+            const simplifiedFinalSummaryHTML = `
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 class="text-xl font-bold text-green-900 mb-3">Ringkasan Estimasi Total</h3>
+                    <ul class="list-disc list-inside space-y-1 ml-2 text-base text-green-800">
+                        <li>Total Komponen Diproses: ${pendingScheduleComponents.length} Item</li>
+                        <li>Total Shift Paralel Tertinggi: <span class="font-bold">${decimalFormatter.format(longestShiftNet)} Shift</span>
+                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Mesin tersibuk menentukan durasi total proyek ini)</span>
+                        </li>
+                        <li class="font-bold">Durasi Kalender: ${totalDaysBooked} Hari
+                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Asumsi kerja 3 Shift/Hari non-stop)</span>
+                        </li>
+                    </ul>
+                </div>
+            `;
+
+            document.getElementById('estimationDetails').innerHTML = simplifiedFinalSummaryHTML + combinedDetailsHTML;
+            document.getElementById('results').classList.remove('hidden');
+            
+            renderComponentSelectionList(pendingScheduleComponents);
+
+            showMessage(`Estimasi berhasil dihitung untuk ${pendingScheduleComponents.length} komponen!`, "info");
+
+            const autoSchedulePanel = document.getElementById('autoSchedulePanel');
+            if (isLoggedIn) {
+                autoSchedulePanel.classList.remove('hidden');
+                document.getElementById('autoScheduleStatus').classList.add('hidden');
+                document.getElementById('autoScheduleStartDate').focus();
+            } else {
+                autoSchedulePanel.classList.add('hidden'); 
+                componentSelectionPanel.classList.add('hidden');
+            }
+        }
+
+        // --- UPDATE: Algorithm to Respect Start Shift Preference ---
+        async function autoScheduleProduction_Simple(startDate, components) {
+
+            const proposedSlots = [];
+            let totalComponents = components.length;
+            let scheduledCount = 0;
+            const simulationSlotTracker = new Set(); 
+            let latestEndDate = new Date(startDate); 
+
+            const date60DaysLater = new Date(startDate);
+            date60DaysLater.setDate(date60DaysLater.getDate() + 60); 
+
+            const date60DaysLaterStr = formatDateToDMY(date60DaysLater);
+            const startDateStr = formatDateToDMY(startDate);
+
+            await fetchScheduleData(startDateStr, date60DaysLaterStr);
+
+            for (const component of components) {
+                let remainingShiftNet = component.shiftNet; 
+                const totalShiftNeeded = Math.ceil(remainingShiftNet); 
+
+                const machinesToCheck = [];
+                if (component.machine) {
+                    machinesToCheck.push(component.machine.trim().toUpperCase());
+                }
+                if (component.machine_optional) {
+                     component.machine_optional.split(',')
+                        .map(m => m.trim().toUpperCase())
+                        .filter(m => m && !machinesToCheck.includes(m))
+                        .forEach(m => machinesToCheck.push(m));
+                }
+                if (machinesToCheck.length === 0) {
+                     console.warn(`Komponen ${component.productCode} (${component.productName}) tidak memiliki mesin, dilewati.`);
+                     totalComponents--; 
+                     continue;
+                }
+                
+                let chosenMachine = null; 
+                let machineFound = false;
+
+                // --- PHASE 1: FIND SUITABLE MACHINE (Assuming Auto Start for Feasibility Check) ---
+                // Note: For simplicity, feasibility check ignores strict shift start, but actual scheduling below enforces it.
+                for (const machineToFind of machinesToCheck) {
+                    let availableCapacityInShifts = 0;
+                    let tempDate = new Date(startDate);
+
+                    for (let i = 0; i < 60; i++) { 
+                        const isWeekend = tempDate.getDay() === 0 || tempDate.getDay() === 6;
+                        if (!isWeekend) {
+                            const dbDate = formatDateToYMD(tempDate);
+                            for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
+                                const shiftName = `Shift ${s}`;
+                                const key = `${machineToFind}|${dbDate}|${shiftName}`;
+                                
+                                if (!scheduleData[key] && !simulationSlotTracker.has(key)) {
+                                    availableCapacityInShifts++;
+                                }
+                            }
+                        }
+                        tempDate.setDate(tempDate.getDate() + 1);
+
+                        if (availableCapacityInShifts >= totalShiftNeeded) {
+                            chosenMachine = machineToFind;
+                            machineFound = true;
+                            break; 
+                        }
+                    }
+
+                    if (machineFound) {
+                        break; 
+                    }
+                }
+
+                if (machineFound && chosenMachine) {
+                    let scheduled = false;
+                    let currentWorkingDate = new Date(startDate); 
+                    
+                    // --- NEW: Track if we have started filling slots for this component ---
+                    let hasStartedFilling = false;
+                    let slotsFilledForThisComponent = 0;
+
+                    for (let i = 0; i < 60; i++) {
+                        if (remainingShiftNet <= 0) {
+                            scheduled = true;
+                            const componentEndDate = new Date(currentWorkingDate);
+                            componentEndDate.setDate(componentEndDate.getDate() - 1); 
+                            if (componentEndDate > latestEndDate) {
+                                latestEndDate = new Date(componentEndDate);
+                            }
+                            break;
+                        }
+
+                        const isWeekend = currentWorkingDate.getDay() === 0 || currentWorkingDate.getDay() === 6;
+                        if (isWeekend) {
+                            currentWorkingDate.setDate(currentWorkingDate.getDate() + 1);
+                            continue; 
+                        }
+
+                        const dbDate = formatDateToYMD(currentWorkingDate);
+
+                        for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
+                            if (remainingShiftNet <= 0) break;
+                            const shiftName = `Shift ${s}`;
+                            
+                            // --- NEW LOGIC: Check Start Preference ---
+                            // If we haven't started filling slots yet (this is the first slot for this component),
+                            // AND user has a preference (not 'auto'),
+                            // AND current shift name doesn't match preference...
+                            if (!hasStartedFilling && component.startShiftPreference !== 'auto') {
+                                if (shiftName !== component.startShiftPreference) {
+                                    // Skip this slot (Wait for the preferred shift)
+                                    continue;
+                                }
+                            }
+                            
+                            const key = `${chosenMachine}|${dbDate}|${shiftName}`;
+
+                            if (!scheduleData[key] && !simulationSlotTracker.has(key)) {
+                                proposedSlots.push({
+                                    machine: chosenMachine, 
+                                    shift: shiftName,
+                                    dbDate: dbDate,
+                                    productCode: component.productCode,
+                                    productName: component.productName,
+                                    orderQty: component.orderQty 
+                                });
+
+                                simulationSlotTracker.add(key); 
+                                remainingShiftNet -= 1; 
+                                hasStartedFilling = true; // Mark as started, subsequent slots will be filled ASAP (marathon)
+                            }
+                        }
+                        currentWorkingDate.setDate(currentWorkingDate.getDate() + 1);
+                    }
+                    
+                    if (scheduled) {
+                        scheduledCount++;
+                    } else {
+                        return { error: `Gagal menjadwalkan ${component.productCode} (Mesin ${chosenMachine}) - Terjadi error internal.` };
+                    }
+
                 } else {
-                    showMessage("Gagal memuat data jadwal dari database.", "error");
+                    return { error: `Gagal menjadwalkan ${component.productCode}. Kapasitas di mesin [${machinesToCheck.join(', ')}] penuh (membutuhkan ${totalShiftNeeded} slot).` };
+                }
+            }
+
+            const finalEndDateDisplay = formatDateToDMY(latestEndDate); 
+
+            return {
+                proposedSlots: proposedSlots,
+                totalComponents: totalComponents,
+                scheduledCount: scheduledCount,
+                endDateDisplay: finalEndDateDisplay,
+            };
+        }
+
+        // --- end of listenForProductionData and processSupabaseData which are now handled above ---
+
+        function processSupabaseData(data) {
+            const newProductionData = {};
+            if (data) {
+                data.forEach(item => {
+                    newProductionData[item.id] = {
+                        ...item,
+                        id: item.id,
+                        pcs_per_box: cleanInt(item.pcs_per_box),
+                        targetPerShift: cleanInt(item.targetPerShift),
+                        machine_optional: item.machine_optional || null, 
+                    };
+                });
+            }
+            productionData = newProductionData;
+            populateProductDatalist();
+            populateMachineDropdowns(); 
+            renderRateTable();
+        }
+
+        async function saveProductionData(event) {
+            event.preventDefault();
+
+            if (!isLoggedIn) {
+                showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menyimpan data.", "error");
+                return;
+            }
+
+            const currentId = document.getElementById('inputId').value;
+            const code = document.getElementById('inputCode').value.trim();
+            const name = document.getElementById('inputName').value.trim() || 'Tidak Diketahui';
+            const machine = document.getElementById('inputMachine').value.trim() || 'Tidak Diketahui';
+            const machineOptional = document.getElementById('inputMachineOptional').value.trim() || null; 
+
+            const pcsPerBox = cleanInt(document.getElementById('inputPcsPerBox').value);
+            const targetPerShift = cleanInt(document.getElementById('inputTargetPerShift').value);
+
+            if (!code || pcsPerBox <= 0 || targetPerShift <= 0) {
+                showMessage("Kode Barang, Isi Dus, dan Target per Shift wajib diisi dan harus berupa angka positif (di atas 0).", "error");
+                return;
+            }
+
+            const isoTimestampString = new Date().toISOString();
+
+            const dataToSave = {
+                code: code,
+                name: name,
+                machine: machine,
+                machine_optional: machineOptional, 
+                pcs_per_box: pcsPerBox,
+                targetPerShift: targetPerShift,
+                timestamp: isoTimestampString
+            };
+
+            try {
+                let response;
+
+                if (currentId) {
+                    response = await supabase
+                        .from(TABLE_NAME)
+                        .update(dataToSave)
+                        .eq('id', currentId)
+                        .select();
+
+                    if (response.error) throw response.error;
+                    showMessage(`Data untuk Kode Barang ${code} berhasil diperbarui!`, "info");
+
+                } else {
+                    response = await supabase
+                        .from(TABLE_NAME)
+                        .insert([dataToSave])
+                        .select();
+
+                    if (response.error) throw response.error;
+                    showMessage(`Data untuk Kode Barang ${code} berhasil disimpan!`, "info");
+                }
+
+                cancelEdit();
+            } catch (e) {
+                console.error("Error saving/updating data to Supabase: ", e);
+                let errorMessage = `Gagal menyimpan/memperbarui data. Error: ${e.message}`;
+                 if (e.code && (e.code === '401' || e.code === '403')) {
+                     errorMessage = "Gagal menyimpan. Cek pengaturan RLS (Row Level Security) di Supabase untuk operasi INSERT/UPDATE.";
+                 } else if (e.message && e.message.includes("column \"machine_optional\" does not exist")) {
+                     errorMessage = "Gagal menyimpan: Kolom 'machine_optional' tidak ditemukan di Supabase. Mohon tambahkan kolom tersebut (tipe: text).";
+                 }
+                showMessage(errorMessage, "error");
+            }
+        }
+
+        window.confirmDelete = async function() {
+            const idToDelete = document.getElementById('deleteIdConfirm').value;
+            toggleDeleteModal(false);
+
+            if (idToDelete) {
+                try {
+                    const { error } = await supabase
+                        .from(TABLE_NAME)
+                        .delete()
+                        .eq('id', idToDelete);
+
+                    if (error) throw error;
+
+                    showMessage(`Data Kode Barang ${productionData[idToDelete].code} berhasil dihapus.`, "info");
+                    cancelEdit();
+                } catch (e) {
+                    console.error("Error deleting document: ", e);
+                    let errorMessage = `Gagal menghapus data. Error: ${e.message}`;
+                    if (e.code && (e.code === '401' || e.code === '403')) {
+                         errorMessage = "Gagal menghapus. Cek pengaturan RLS (Row Level Security) di Supabase untuk operasi DELETE.";
+                    }
+                    showMessage(errorMessage, "error");
                 }
             }
         }
 
-        async function fetchAllScheduleData() {
+        window.prepareDelete = function(id) {
+            if (!isLoggedIn) {
+                showMessage("Anda harus Login Admin untuk menghapus data.", "error");
+                return;
+            }
+            const data = productionData[id];
+            if (!data) return;
+
+            document.getElementById('deleteCodeDisplay').textContent = `${data.code} (${data.name})`;
+            document.getElementById('deleteIdConfirm').value = id;
+            toggleDeleteModal(true);
+        }
+
+        window.toggleDeleteModal = function(show) {
+            document.getElementById('deleteModal').classList.toggle('hidden', !show);
+        }
+
+        window.startEditData = function(id) {
+            if (!isLoggedIn) {
+                showMessage("Anda harus Login Admin untuk mengedit data.", "error");
+                return;
+            }
+            const data = productionData[id];
+            if (!data) return;
+
+            document.getElementById('inputId').value = id;
+            document.getElementById('inputCode').value = data.code;
+            document.getElementById('inputName').value = data.name;
+            document.getElementById('inputMachine').value = data.machine;
+            document.getElementById('inputMachineOptional').value = data.machine_optional || ''; 
+
+            document.getElementById('inputPcsPerBox').value = data.pcs_per_box.toLocaleString('id-ID');
+            document.getElementById('inputTargetPerShift').value = data.targetPerShift.toLocaleString('id-ID');
+
+            document.getElementById('inputTargetPerShift').dispatchEvent(new Event('input'));
+
+            document.getElementById('submitButton').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3 3m3-3V4" />
+                </svg>
+                Perbarui Data (${data.code})
+            `;
+            document.getElementById('submitButton').classList.remove('bg-indigo-600', 'bg-cyan-600');
+            document.getElementById('submitButton').classList.add('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('cancelEditButton').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showView('estimation'); 
+        }
+
+        window.cancelEdit = function() {
+            document.getElementById('productionDataForm').reset();
+            document.getElementById('inputId').value = '';
+
+            document.getElementById('submitButton').innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3 3m3-3V4" />
+                </svg>
+                Simpan Data Produksi
+            `;
+            document.getElementById('submitButton').classList.remove('bg-green-600', 'hover:bg-green-700');
+            document.getElementById('submitButton').classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+            document.getElementById('cancelEditButton').classList.add('hidden');
+            document.getElementById('capacity3Shift').value = 'Otomatis Terisi';
+        }
+
+        window.toggleDetails = function() {
+            const detailsDiv = document.getElementById('estimationDetails');
+            const button = document.getElementById('toggleDetailsButton');
+            const icon = document.getElementById('toggleIcon');
+
+            if (detailsDiv.classList.contains('hidden')) {
+                detailsDiv.classList.remove('hidden');
+                button.textContent = 'Sembunyikan Detail Perhitungan';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7-7" />';
+                button.prepend(icon);
+            } else {
+                detailsDiv.classList.add('hidden');
+                button.textContent = 'Lihat Detail Perhitungan';
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />';
+                button.prepend(icon);
+            }
+        }
+        
+        // --- Improved Initialization Logic ---
+        
+        // Helper untuk mencoba fetch ulang jika gagal
+        async function fetchWithRetry(fn, retries = 3, delay = 1000) {
+            try {
+                return await fn();
+            } catch (err) {
+                if (retries <= 0) throw err;
+                await new Promise(res => setTimeout(res, delay));
+                return fetchWithRetry(fn, retries - 1, delay * 1.5); // Exponential backoff
+            }
+        }
+
+        window.onload = async function() {
+            try {
+                if (!window.supabase) {
+                     throw new Error("SDK Supabase tidak dimuat. Cek koneksi internet anda.");
+                }
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // 1. Cek koneksi sederhana dulu sebelum lanjut
+                // Menggunakan fetchWithRetry untuk ketahanan terhadap network glitch
+                await fetchWithRetry(async () => {
+                     const { error } = await supabase.from(TABLE_NAME).select('id').limit(1);
+                     if (error) throw error;
+                });
+
+                // 2. Setup App (termasuk fetch data utama) dan tunggu sampai selesai
+                await setupApp();
+
+                // 3. Tampilkan pesan sukses hanya jika semua di atas berhasil
+                showMessage("Koneksi Supabase Berhasil! (Menggunakan data 'production_rates')", "info");
+                showView('estimation'); 
+
+            } catch (error) {
+                console.error("Kesalahan inisialisasi Supabase:", error);
+
+                let errorMessage;
+                if (error.message && error.message.includes("Failed to fetch")) {
+                    errorMessage = "Gagal terhubung ke Supabase. Cek koneksi internet atau apakah Project Supabase sedang 'Paused'.";
+                } else {
+                    errorMessage = `Gagal menginisialisasi Supabase: ${error.message}`;
+                }
+                showMessage(errorMessage, "error");
+                
+                // Fallback: Tetap coba tampilkan view meskipun error (agar UI tidak blank)
+                showView('estimation');
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const box = document.getElementById('messageBox');
+            if (!box) { 
+                console.error("Message box element not found. Message:", message);
+                return;
+            }
+            box.textContent = message;
+            box.className = `fixed top-4 left-1/2 transform -translate-x-1/2 p-3 rounded-lg shadow-xl transition-opacity duration-300 z-50 ${
+                type === 'error' ? 'bg-red-600' : 'bg-green-600'
+            } text-white`;
+            box.classList.remove('hidden');
+            setTimeout(() => {
+                box.classList.add('hidden');
+            }, 5000);
+        }
+
+        async function setupApp() {
+            setupCapacityListener(); 
+            
+            // Tunggu data produksi dimuat
+            await listenForProductionData();
+
+            const prodForm = document.getElementById('productionDataForm');
+            if (prodForm) {
+                prodForm.addEventListener('submit', saveProductionData);
+            }
+
+            const planningForm = document.getElementById('planningForm');
+            if (planningForm) {
+                planningForm.addEventListener('submit', handlePlanningFormSubmit);
+            }
+            
+            const masterSearch = document.getElementById('masterSearchInput');
+            if (masterSearch) {
+                masterSearch.addEventListener('input', () => {
+                    const query = masterSearch.value.toLowerCase();
+                    renderRateTable(query);
+                });
+            }
+
+            const summaryWrapper = document.getElementById('dailySummaryWrapper');
+            const tableWrapper = document.getElementById('planningTableWrapper');
+
+            if (summaryWrapper && tableWrapper) {
+                tableWrapper.addEventListener('scroll', () => {
+                    if (isSyncingScroll) {
+                        isSyncingScroll = false;
+                        return;
+                    }
+                    isSyncingScroll = true;
+                    summaryWrapper.scrollLeft = tableWrapper.scrollLeft;
+                });
+
+                summaryWrapper.addEventListener('scroll', () => {
+                    if (isSyncingScroll) {
+                        isSyncingScroll = false;
+                        return;
+                    }
+                    isSyncingScroll = true;
+                    tableWrapper.scrollLeft = summaryWrapper.scrollLeft;
+                });
+            }
+
+            updateAutoScheduleButton();
+            
+            // Inisialisasi dengan 1 baris input
+            addInputRow();
+        }
+
+        async function listenForProductionData() {
             if (!supabase) return;
 
             try {
-                const { data, error } = await supabase
-                    .from(SCHEDULE_TABLE_NAME)
-                    .select('*')
-                    .order('product_code', { ascending: true })
-                    .order('schedule_date', { ascending: true })
-                    .order('mesin', { ascending: true })
-                    .order('schedule_shift', { ascending: true });
-
+                // Gunakan await untuk memastikan data didapat sebelum lanjut
+                const { data, error } = await supabase.from(TABLE_NAME).select('*');
+                
                 if (error) throw error;
-                masterScheduleData = data;
+                
+                processSupabaseData(data);
 
-            } catch (e) {
-                console.error("Error fetching all schedule data for master table:", e);
-                masterScheduleData = [];
-                if (e.message && e.message.includes("Could not find the table")) {
-                     showMessage(`Gagal memuat data Master Jadwal: Tabel '${SCHEDULE_TABLE_NAME}' tidak ditemukan.`, "error");
-                } else if (e.message && e.message.includes("fetch")) {
-                     showMessage(`Gagal memuat data Master Jadwal: Terjadi error jaringan (Failed to fetch). Ini mungkin karena RLS (Row Level Security) pada tabel '${SCHEDULE_TABLE_NAME}' memblokir pembacaan.`, "error");
-                } else {
-                     showMessage("Gagal memuat semua data jadwal dari database.", "error");
-                }
+                // Setup realtime subscription
+                supabase.channel('public:production_rates')
+                    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME }, (payload) => {
+                        supabase.from(TABLE_NAME).select('*').then(({ data: newData }) => {
+                            processSupabaseData(newData);
+                        });
+                    })
+                    .subscribe();
+
+            } catch (err) {
+                console.error("Supabase connection error in listenForProductionData:", err);
+                throw err; // Lempar error ke atas agar ditangkap window.onload
+            }
+        }
+        
+        function updateAutoScheduleButton() {
+            const button = document.getElementById('autoScheduleButton');
+            if (isLoggedIn) {
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
+                    </svg>
+                    Jadwalkan Otomatis
+                `;
+            } else {
+                button.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 8a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Lihat Jadwal 7-Hari
+                `;
             }
         }
 
+        function updateAdminUI() {
+            const loginButton = document.getElementById('adminLoginButton');
+            const loginButtonDesktop = document.getElementById('adminLoginButtonDesktop');
+
+            if (isLoggedIn) {
+                loginButton.textContent = 'Logout';
+                loginButtonDesktop.textContent = 'Logout';
+                loginButton.onclick = prepareLogout;
+                loginButtonDesktop.onclick = prepareLogout;
+                loginButton.classList.remove('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
+                loginButton.classList.add('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
+                loginButtonDesktop.classList.remove('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
+                loginButtonDesktop.classList.add('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
+            } else {
+                loginButton.textContent = 'Login';
+                loginButtonDesktop.textContent = 'Login Admin';
+                loginButton.onclick = toggleAdminLogin;
+                loginButtonDesktop.onclick = toggleAdminLogin;
+                loginButton.classList.add('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
+                loginButton.classList.remove('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
+                loginButtonDesktop.classList.add('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
+                loginButtonDesktop.classList.remove('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
+            }
+
+            const pdfButton = document.getElementById('exportPdfButton');
+            const resultsVisible = !document.getElementById('results').classList.contains('hidden');
+            
+            if (isLoggedIn && resultsVisible) {
+                pdfButton.classList.remove('hidden');
+            } else {
+                pdfButton.classList.add('hidden');
+            }
+
+            updateAutoScheduleButton();
+
+            const activeViewElement = document.querySelector('.view-content:not(.hidden)');
+            if (activeViewElement) {
+                const activeView = activeViewElement.id.replace('View', '');
+                showView(activeView);
+            }
+        }
+
+        window.toggleAdminLogin = function() {
+            document.getElementById('loginModal').classList.toggle('hidden');
+            if (!document.getElementById('loginModal').classList.contains('hidden')) {
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        window.attemptAdminLogin = function() {
+            const inputPass = document.getElementById('adminPasswordInput').value;
+
+            if (inputPass === ADMIN_PASSWORD) {
+                isLoggedIn = true;
+                toggleAdminLogin();
+                updateAdminUI();
+                showMessage("Login Admin Berhasil!", "info");
+                showView('estimation');
+            } else {
+                showMessage("Kata Sandi Salah.", "error");
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('adminPasswordInput').focus();
+            }
+        }
+
+        window.prepareLogout = function() {
+            toggleLogoutModal(true);
+        }
+
+        window.toggleLogoutModal = function(show) {
+            document.getElementById('logoutModal').classList.toggle('hidden', !show);
+        }
+
+        window.confirmLogout = function() {
+            toggleLogoutModal(false);
+            handleAdminLogout();
+        }
+
+        function handleAdminLogout() {
+            isLoggedIn = false;
+            updateAdminUI();
+            showMessage("Logout Admin Berhasil.", "info");
+            showView('estimation');
+        }
+
+        // --- NEW: Helper for Master Schedule ---
         window.renderScheduleMasterTable = async function(searchQuery = '') {
             const container = document.getElementById('scheduleMasterContainer'); 
 
@@ -2533,1158 +3777,74 @@
             }
         }
 
-        // --- Improved Initialization Logic ---
-        
-        // Helper untuk mencoba fetch ulang jika gagal
-        async function fetchWithRetry(fn, retries = 3, delay = 1000) {
-            try {
-                return await fn();
-            } catch (err) {
-                if (retries <= 0) throw err;
-                await new Promise(res => setTimeout(res, delay));
-                return fetchWithRetry(fn, retries - 1, delay * 1.5); // Exponential backoff
-            }
-        }
-
-        window.onload = async function() {
-            try {
-                if (!window.supabase) {
-                     throw new Error("SDK Supabase tidak dimuat. Cek koneksi internet anda.");
-                }
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                
-                // 1. Cek koneksi sederhana dulu sebelum lanjut
-                // Menggunakan fetchWithRetry untuk ketahanan terhadap network glitch
-                await fetchWithRetry(async () => {
-                     const { error } = await supabase.from(TABLE_NAME).select('id').limit(1);
-                     if (error) throw error;
-                });
-
-                // 2. Setup App (termasuk fetch data utama) dan tunggu sampai selesai
-                await setupApp();
-
-                // 3. Tampilkan pesan sukses hanya jika semua di atas berhasil
-                showMessage("Koneksi Supabase Berhasil! (Menggunakan data 'production_rates')", "info");
-                showView('estimation'); 
-
-            } catch (error) {
-                console.error("Kesalahan inisialisasi Supabase:", error);
-
-                let errorMessage;
-                if (error.message && error.message.includes("Failed to fetch")) {
-                    errorMessage = "Gagal terhubung ke Supabase. Cek koneksi internet atau apakah Project Supabase sedang 'Paused'.";
-                } else {
-                    errorMessage = `Gagal menginisialisasi Supabase: ${error.message}`;
-                }
-                showMessage(errorMessage, "error");
-                
-                // Fallback: Tetap coba tampilkan view meskipun error (agar UI tidak blank)
-                showView('estimation');
-            }
-        }
-
-        function showMessage(message, type = 'info') {
-            const box = document.getElementById('messageBox');
-            if (!box) { 
-                console.error("Message box element not found. Message:", message);
-                return;
-            }
-            box.textContent = message;
-            box.className = `fixed top-4 left-1/2 transform -translate-x-1/2 p-3 rounded-lg shadow-xl transition-opacity duration-300 z-50 ${
-                type === 'error' ? 'bg-red-600' : 'bg-green-600'
-            } text-white`;
-            box.classList.remove('hidden');
-            setTimeout(() => {
-                box.classList.add('hidden');
-            }, 5000);
-        }
-
-        async function setupApp() {
-            setupCapacityListener(); 
-            
-            // Tunggu data produksi dimuat
-            await listenForProductionData();
-
-            const prodForm = document.getElementById('productionDataForm');
-            if (prodForm) {
-                prodForm.addEventListener('submit', saveProductionData);
-            }
-
-            const planningForm = document.getElementById('planningForm');
-            if (planningForm) {
-                planningForm.addEventListener('submit', handlePlanningFormSubmit);
-            }
-            
-            const masterSearch = document.getElementById('masterSearchInput');
-            if (masterSearch) {
-                masterSearch.addEventListener('input', () => {
-                    const query = masterSearch.value.toLowerCase();
-                    renderRateTable(query);
-                });
-            }
-
-            const summaryWrapper = document.getElementById('dailySummaryWrapper');
-            const tableWrapper = document.getElementById('planningTableWrapper');
-
-            if (summaryWrapper && tableWrapper) {
-                tableWrapper.addEventListener('scroll', () => {
-                    if (isSyncingScroll) {
-                        isSyncingScroll = false;
-                        return;
-                    }
-                    isSyncingScroll = true;
-                    summaryWrapper.scrollLeft = tableWrapper.scrollLeft;
-                });
-
-                summaryWrapper.addEventListener('scroll', () => {
-                    if (isSyncingScroll) {
-                        isSyncingScroll = false;
-                        return;
-                    }
-                    isSyncingScroll = true;
-                    tableWrapper.scrollLeft = summaryWrapper.scrollLeft;
-                });
-            }
-
-            updateAutoScheduleButton();
-            
-            // Inisialisasi dengan 1 baris input
-            addInputRow();
-        }
-
-        async function listenForProductionData() {
+        async function fetchScheduleData(startDateStr, endDateStr) {
             if (!supabase) return;
 
-            try {
-                // Gunakan await untuk memastikan data didapat sebelum lanjut
-                const { data, error } = await supabase.from(TABLE_NAME).select('*');
-                
-                if (error) throw error;
-                
-                processSupabaseData(data);
+            const startDateParsed = parseDMY(startDateStr);
+            const endDateParsed = parseDMY(endDateStr);
 
-                // Setup realtime subscription
-                supabase.channel('public:production_rates')
-                    .on('postgres_changes', { event: '*', schema: 'public', table: TABLE_NAME }, (payload) => {
-                        supabase.from(TABLE_NAME).select('*').then(({ data: newData }) => {
-                            processSupabaseData(newData);
-                        });
-                    })
-                    .subscribe();
-
-            } catch (err) {
-                console.error("Supabase connection error in listenForProductionData:", err);
-                throw err; // Lempar error ke atas agar ditangkap window.onload
-            }
-        }
-        
-        // === NEW: Dynamic Input Row Functions ===
-        window.addInputRow = function() {
-            const container = document.getElementById('inputRowsContainer');
-            const rowId = 'input-row-' + Date.now();
-            
-            const div = document.createElement('div');
-            div.id = rowId;
-            div.className = 'product-input-row grid grid-cols-1 md:grid-cols-12 gap-4 items-end p-4 bg-white rounded-lg border border-indigo-100 shadow-sm';
-            
-            // Check if it's the first row to determine if delete button should be shown
-            const isFirstRow = container.children.length === 0;
-            
-            div.innerHTML = `
-                <div class="md:col-span-5">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Kode Produk</label>
-                    <input type="text" class="product-code-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-gray-800 shadow-sm uppercase-input" placeholder="Masukkan Kode Barang" list="productCodeList" oninput="this.value = this.value.toUpperCase()">
-                </div>
-                <div class="md:col-span-5">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Jumlah Pesanan (Dus)</label>
-                    <input type="number" class="order-qty-input w-full p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 shadow-sm" placeholder="Contoh: 1500" min="1">
-                </div>
-                <div class="md:col-span-2 flex justify-end">
-                    <button onclick="removeInputRow('${rowId}')" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-full transition duration-150 ${isFirstRow ? 'hidden' : ''}" title="Hapus Baris">
-                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </div>
-            `;
-            
-            container.appendChild(div);
-            
-            // Ensure delete buttons are managed correctly (first row shouldn't be deletable if it's the only one, but if we add more, logic handles it)
-            updateDeleteButtonsVisibility();
-        }
-
-        window.removeInputRow = function(rowId) {
-            const row = document.getElementById(rowId);
-            if (row) {
-                row.remove();
-                updateDeleteButtonsVisibility();
-            }
-        }
-
-        function updateDeleteButtonsVisibility() {
-            const container = document.getElementById('inputRowsContainer');
-            const buttons = container.querySelectorAll('button');
-            
-            if (container.children.length === 1) {
-                buttons.forEach(btn => btn.classList.add('hidden'));
-            } else {
-                buttons.forEach(btn => btn.classList.remove('hidden'));
-            }
-        }
-
-        function updateAutoScheduleButton() {
-            const button = document.getElementById('autoScheduleButton');
-            if (isLoggedIn) {
-                button.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd" />
-                    </svg>
-                    Jadwalkan Otomatis
-                `;
-            } else {
-                button.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor">
-                      <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zM4 8a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1z" clip-rule="evenodd" />
-                    </svg>
-                    Lihat Jadwal 7-Hari
-                `;
-            }
-        }
-
-        function updateAdminUI() {
-            const loginButton = document.getElementById('adminLoginButton');
-            const loginButtonDesktop = document.getElementById('adminLoginButtonDesktop');
-
-            if (isLoggedIn) {
-                loginButton.textContent = 'Logout';
-                loginButtonDesktop.textContent = 'Logout';
-                loginButton.onclick = prepareLogout;
-                loginButtonDesktop.onclick = prepareLogout;
-                loginButton.classList.remove('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
-                loginButton.classList.add('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
-                loginButtonDesktop.classList.remove('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
-                loginButtonDesktop.classList.add('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
-            } else {
-                loginButton.textContent = 'Login';
-                loginButtonDesktop.textContent = 'Login Admin';
-                loginButton.onclick = toggleAdminLogin;
-                loginButtonDesktop.onclick = toggleAdminLogin;
-                loginButton.classList.add('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
-                loginButton.classList.remove('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
-                loginButtonDesktop.classList.add('bg-indigo-50', 'hover:bg-indigo-100', 'text-indigo-700', 'border-indigo-200');
-                loginButtonDesktop.classList.remove('bg-red-50', 'hover:bg-red-100', 'text-red-700', 'border-red-200');
-            }
-
-            const pdfButton = document.getElementById('exportPdfButton');
-            const resultsVisible = !document.getElementById('results').classList.contains('hidden');
-            
-            if (isLoggedIn && resultsVisible) {
-                pdfButton.classList.remove('hidden');
-            } else {
-                pdfButton.classList.add('hidden');
-            }
-
-            updateAutoScheduleButton();
-
-            const activeViewElement = document.querySelector('.view-content:not(.hidden)');
-            if (activeViewElement) {
-                const activeView = activeViewElement.id.replace('View', '');
-                showView(activeView);
-            }
-        }
-
-        window.toggleAdminLogin = function() {
-            document.getElementById('loginModal').classList.toggle('hidden');
-            if (!document.getElementById('loginModal').classList.contains('hidden')) {
-                document.getElementById('adminPasswordInput').value = '';
-                document.getElementById('adminPasswordInput').focus();
-            }
-        }
-
-        window.attemptAdminLogin = function() {
-            const inputPass = document.getElementById('adminPasswordInput').value;
-
-            if (inputPass === ADMIN_PASSWORD) {
-                isLoggedIn = true;
-                toggleAdminLogin();
-                updateAdminUI();
-                showMessage("Login Admin Berhasil!", "info");
-                showView('estimation');
-            } else {
-                showMessage("Kata Sandi Salah.", "error");
-                document.getElementById('adminPasswordInput').value = '';
-                document.getElementById('adminPasswordInput').focus();
-            }
-        }
-
-        window.prepareLogout = function() {
-            toggleLogoutModal(true);
-        }
-
-        window.toggleLogoutModal = function(show) {
-            document.getElementById('logoutModal').classList.toggle('hidden', !show);
-        }
-
-        window.confirmLogout = function() {
-            toggleLogoutModal(false);
-            handleAdminLogout();
-        }
-
-        function handleAdminLogout() {
-            isLoggedIn = false;
-            updateAdminUI();
-            showMessage("Logout Admin Berhasil.", "info");
-            showView('estimation');
-        }
-
-        // --- end of listenForProductionData and processSupabaseData which are now handled above ---
-
-        function processSupabaseData(data) {
-            const newProductionData = {};
-            if (data) {
-                data.forEach(item => {
-                    newProductionData[item.id] = {
-                        ...item,
-                        id: item.id,
-                        pcs_per_box: cleanInt(item.pcs_per_box),
-                        targetPerShift: cleanInt(item.targetPerShift),
-                        machine_optional: item.machine_optional || null, 
-                    };
-                });
-            }
-            productionData = newProductionData;
-            populateProductDatalist();
-            populateMachineDropdowns(); 
-            renderRateTable();
-        }
-
-        async function saveProductionData(event) {
-            event.preventDefault();
-
-            if (!isLoggedIn) {
-                showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menyimpan data.", "error");
-                return;
-            }
-
-            const currentId = document.getElementById('inputId').value;
-            const code = document.getElementById('inputCode').value.trim();
-            const name = document.getElementById('inputName').value.trim() || 'Tidak Diketahui';
-            const machine = document.getElementById('inputMachine').value.trim() || 'Tidak Diketahui';
-            const machineOptional = document.getElementById('inputMachineOptional').value.trim() || null; 
-
-            const pcsPerBox = cleanInt(document.getElementById('inputPcsPerBox').value);
-            const targetPerShift = cleanInt(document.getElementById('inputTargetPerShift').value);
-
-            if (!code || pcsPerBox <= 0 || targetPerShift <= 0) {
-                showMessage("Kode Barang, Isi Dus, dan Target per Shift wajib diisi dan harus berupa angka positif (di atas 0).", "error");
-                return;
-            }
-
-            const isoTimestampString = new Date().toISOString();
-
-            const dataToSave = {
-                code: code,
-                name: name,
-                machine: machine,
-                machine_optional: machineOptional, 
-                pcs_per_box: pcsPerBox,
-                targetPerShift: targetPerShift,
-                timestamp: isoTimestampString
-            };
-
-            try {
-                let response;
-
-                if (currentId) {
-                    response = await supabase
-                        .from(TABLE_NAME)
-                        .update(dataToSave)
-                        .eq('id', currentId)
-                        .select();
-
-                    if (response.error) throw response.error;
-                    showMessage(`Data untuk Kode Barang ${code} berhasil diperbarui!`, "info");
-
-                } else {
-                    response = await supabase
-                        .from(TABLE_NAME)
-                        .insert([dataToSave])
-                        .select();
-
-                    if (response.error) throw response.error;
-                    showMessage(`Data untuk Kode Barang ${code} berhasil disimpan!`, "info");
-                }
-
-                cancelEdit();
-            } catch (e) {
-                console.error("Error saving/updating data to Supabase: ", e);
-                let errorMessage = `Gagal menyimpan/memperbarui data. Error: ${e.message}`;
-                 if (e.code && (e.code === '401' || e.code === '403')) {
-                     errorMessage = "Gagal menyimpan. Cek pengaturan RLS (Row Level Security) di Supabase untuk operasi INSERT/UPDATE.";
-                 } else if (e.message && e.message.includes("column \"machine_optional\" does not exist")) {
-                     errorMessage = "Gagal menyimpan: Kolom 'machine_optional' tidak ditemukan di Supabase. Mohon tambahkan kolom tersebut (tipe: text).";
-                 }
-                showMessage(errorMessage, "error");
-            }
-        }
-
-        window.confirmDelete = async function() {
-            const idToDelete = document.getElementById('deleteIdConfirm').value;
-            toggleDeleteModal(false);
-
-            if (idToDelete) {
-                try {
-                    const { error } = await supabase
-                        .from(TABLE_NAME)
-                        .delete()
-                        .eq('id', idToDelete);
-
-                    if (error) throw error;
-
-                    showMessage(`Data Kode Barang ${productionData[idToDelete].code} berhasil dihapus.`, "info");
-                    cancelEdit();
-                } catch (e) {
-                    console.error("Error deleting document: ", e);
-                    let errorMessage = `Gagal menghapus data. Error: ${e.message}`;
-                    if (e.code && (e.code === '401' || e.code === '403')) {
-                         errorMessage = "Gagal menghapus. Cek pengaturan RLS (Row Level Security) di Supabase untuk operasi DELETE.";
-                    }
-                    showMessage(errorMessage, "error");
-                }
-            }
-        }
-
-        window.prepareDelete = function(id) {
-            if (!isLoggedIn) {
-                showMessage("Anda harus Login Admin untuk menghapus data.", "error");
-                return;
-            }
-            const data = productionData[id];
-            if (!data) return;
-
-            document.getElementById('deleteCodeDisplay').textContent = `${data.code} (${data.name})`;
-            document.getElementById('deleteIdConfirm').value = id;
-            toggleDeleteModal(true);
-        }
-
-        window.toggleDeleteModal = function(show) {
-            document.getElementById('deleteModal').classList.toggle('hidden', !show);
-        }
-
-        window.startEditData = function(id) {
-            if (!isLoggedIn) {
-                showMessage("Anda harus Login Admin untuk mengedit data.", "error");
-                return;
-            }
-            const data = productionData[id];
-            if (!data) return;
-
-            document.getElementById('inputId').value = id;
-            document.getElementById('inputCode').value = data.code;
-            document.getElementById('inputName').value = data.name;
-            document.getElementById('inputMachine').value = data.machine;
-            document.getElementById('inputMachineOptional').value = data.machine_optional || ''; 
-
-            document.getElementById('inputPcsPerBox').value = data.pcs_per_box.toLocaleString('id-ID');
-            document.getElementById('inputTargetPerShift').value = data.targetPerShift.toLocaleString('id-ID');
-
-            document.getElementById('inputTargetPerShift').dispatchEvent(new Event('input'));
-
-            document.getElementById('submitButton').innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3 3m3-3V4" />
-                </svg>
-                Perbarui Data (${data.code})
-            `;
-            document.getElementById('submitButton').classList.remove('bg-indigo-600', 'bg-cyan-600');
-            document.getElementById('submitButton').classList.add('bg-green-600', 'hover:bg-green-700');
-            document.getElementById('cancelEditButton').classList.remove('hidden');
-
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            showView('estimation'); 
-        }
-
-        window.cancelEdit = function() {
-            document.getElementById('productionDataForm').reset();
-            document.getElementById('inputId').value = '';
-
-            document.getElementById('submitButton').innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-3m-1-4l-3 3m0 0l-3 3m3-3V4" />
-                </svg>
-                Simpan Data Produksi
-            `;
-            document.getElementById('submitButton').classList.remove('bg-green-600', 'hover:bg-green-700');
-            document.getElementById('submitButton').classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-            document.getElementById('cancelEditButton').classList.add('hidden');
-            document.getElementById('capacity3Shift').value = 'Otomatis Terisi';
-        }
-
-        window.toggleDetails = function() {
-            const detailsDiv = document.getElementById('estimationDetails');
-            const button = document.getElementById('toggleDetailsButton');
-            const icon = document.getElementById('toggleIcon');
-
-            if (detailsDiv.classList.contains('hidden')) {
-                detailsDiv.classList.remove('hidden');
-                button.textContent = 'Sembunyikan Detail Perhitungan';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7-7" />';
-                button.prepend(icon);
-            } else {
-                detailsDiv.classList.add('hidden');
-                button.textContent = 'Lihat Detail Perhitungan';
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />';
-                button.prepend(icon);
-            }
-        }
-
-
-        function setupCapacityListener() {
-            const targetInput = document.getElementById('inputTargetPerShift');
-            const capacityOutput = document.getElementById('capacity3Shift');
-            const pcsPerBoxInput = document.getElementById('inputPcsPerBox');
-
-            if (!targetInput || !capacityOutput || !pcsPerBoxInput) {
+            if (!startDateParsed || !endDateParsed) {
+                console.error("Format tanggal tidak valid saat memanggil fetchScheduleData");
+                scheduleData = {}; 
                 return; 
             }
 
-            const updateCapacity = () => {
-                const target = cleanInt(targetInput.value);
-
-                if (target > 0) {
-                    const capacity = target * SHIFTS_PER_DAY;
-                    capacityOutput.value = capacity.toLocaleString('id-ID', { maximumFractionDigits: 0 }) + ' pcs';
-                } else {
-                    capacityOutput.value = 'Otomatis Terisi';
-                }
-            };
-
-            targetInput.addEventListener('input', updateCapacity);
-            pcsPerBoxInput.addEventListener('input', () => { });
-        }
-
-        function populateProductDatalist() {
-            const datalist = document.getElementById('productCodeList');
-            datalist.innerHTML = '';
-
-            const uniqueCodes = {};
-            for (const id in productionData) {
-                const data = productionData[id];
-                if (!uniqueCodes[data.code]) {
-                     uniqueCodes[data.code] = true;
-                     const option = document.createElement('option');
-                     option.value = data.code;
-                     option.textContent = `${data.code} - ${data.name} (${data.machine}) [Target 1 Shift: ${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })} pcs]`;
-                     datalist.appendChild(option);
-                }
-            }
-        }
-
-        function renderRateTable(searchQuery = '') {
-            const container = document.getElementById('rateTableContainer');
-            const dataArray = Object.values(productionData);
-            const totalCountSpan = document.getElementById('masterDataTotalCount');
-
-            if (dataArray.length === 0) {
-                container.innerHTML = '<p class="text-gray-500 p-4">Belum ada data produksi yang tersimpan. Silakan tambahkan data menggunakan formulir di halaman Estimasi Produksi (setelah login admin).</p>';
-                return;
-            }
-
-            const filteredData = dataArray.filter(data => {
-                if (!searchQuery) return true;
-                const query = searchQuery.toLowerCase();
-                return (
-                    data.code.toLowerCase().includes(query) ||
-                    data.name.toLowerCase().includes(query) ||
-                    data.machine.toLowerCase().includes(query) ||
-                    (data.machine_optional && data.machine_optional.toLowerCase().includes(query))
-                );
-            });
-
-            if (totalCountSpan) {
-                if (searchQuery) {
-                    totalCountSpan.textContent = `(Menampilkan ${filteredData.length} dari ${dataArray.length} total)`;
-                } else {
-                    totalCountSpan.textContent = `(${dataArray.length} Total)`;
-                }
-            }
-
-            filteredData.sort((a, b) => a.code.localeCompare(b.code));
-
-            if (filteredData.length === 0 && searchQuery) {
-                container.innerHTML = `<p class="text-gray-500 p-4">Tidak ada hasil ditemukan untuk "${searchQuery}".</p>`;
-                return;
-            }
-
-            const actionHeader = isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : '';
-
-            let tableHTML = `
-                <table class="min-w-full bg-white border border-gray-200">
-                    <thead class="sticky top-0 bg-gray-100 z-10">
-                        <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            <th class="py-3 px-4 border-b w-12 text-center">#</th>
-                            <th class="py-3 px-4 border-b">Kode Barang</th>
-                            <th class="py-3 px-4 border-b">Nama Komponen / Produk</th>
-                            <th class="py-3 px-4 border-b">Mesin Utama</th>
-                            <th class="py-3 px-4 border-b">Mesin (Optional)</th>
-                            <th class="py-3 px-4 border-b text-right">Isi Dus (pcs)</th>
-                            <th class="py-3 px-4 border-b text-right">Target 1 Shift (pcs)</th>
-                            <th class="py-3 px-4 border-b text-right font-bold text-red-600">Kapasitas 3 Shift (pcs)</th>
-                            ${actionHeader}
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            filteredData.forEach((data, index) => {
-                const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
-                const capacity3ShiftPcs = data.targetPerShift * SHIFTS_PER_DAY;
-
-                const actionButtons = isLoggedIn ? `
-                    <td class="py-3 px-4 text-center whitespace-nowrap space-x-2 ${rowClass}">
-                        <button onclick="startEditData('${data.id}')"
-                                class="text-indigo-500 hover:text-indigo-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50 transform hover:scale-105"
-                                title="Edit Data">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                                <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-
-                        <button onclick="prepareDelete('${data.id}')"
-                                class="text-red-500 hover:text-red-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-red-50 transform hover:scale-105"
-                                title="Hapus Data">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                    </td>
-                ` : '';
-
-                tableHTML += `
-                    <tr class="border-b hover:bg-gray-100 ${rowClass}">
-                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
-                        <td class="py-3 px-4 text-gray-800 font-mono whitespace-nowrap">${data.code}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.name}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine_optional || 'N/A'}</td>
-                        <td class="py-3 px-4 text-right">${data.pcs_per_box.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
-                        <td class="py-3 px-4 text-right">${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
-                        <td class="py-3 px-4 text-right font-bold text-red-700">${capacity3ShiftPcs.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
-                        ${actionButtons}
-                    </tr>
-                `;
-            });
-
-            tableHTML += `
-                    </tbody>
-                </table>
-            `;
-            container.innerHTML = tableHTML;
-        }
-
-        window.calculateEstimation = function() {
-            const container = document.getElementById('inputRowsContainer');
-            const rows = container.querySelectorAll('.product-input-row');
-            
-            const componentSelectionPanel = document.getElementById('componentSelectionContainer');
-            componentSelectionPanel.classList.add('hidden');
-            document.getElementById('componentSelectionList').innerHTML = ''; 
-
-            const estimationMachineTracker = {}; 
-            let longestShiftNet = 0; 
-            let combinedDetailsHTML = '';
-            const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const integerFormatter = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 });
-            
-            pendingScheduleComponents = []; 
-            let hasError = false;
-            let anyProductFound = false;
-            
-            // Iterate through all input rows
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                const codeInput = row.querySelector('.product-code-input');
-                const qtyInput = row.querySelector('.order-qty-input');
-                
-                const code = codeInput.value.trim();
-                const orderQtyDus = cleanInt(qtyInput.value);
-                
-                if (!code) continue; // Skip empty rows
-                
-                if (orderQtyDus <= 0) {
-                     showMessage(`Baris ke-${i+1}: Jumlah Pesanan harus valid (angka positif).`, "error");
-                     hasError = true;
-                     continue;
-                }
-                
-                const matchingProducts = Object.values(productionData).filter(data => data.code === code);
-                
-                if (matchingProducts.length === 0) {
-                     showMessage(`Baris ke-${i+1}: Kode Produk "${code}" tidak ditemukan.`, "error");
-                     hasError = true;
-                     continue;
-                }
-                
-                anyProductFound = true;
-                
-                combinedDetailsHTML += `
-                <div class="mb-6 border-b pb-4 border-gray-300">
-                    <h4 class="text-lg font-semibold text-indigo-800 mb-2 flex items-center">
-                        <span class="bg-indigo-100 text-indigo-800 py-1 px-2 rounded text-sm mr-2">Input #${i+1}</span>
-                        Kode: ${code} (Qty: ${integerFormatter.format(orderQtyDus)} Dus)
-                    </h4>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm text-xs">
-                            <thead>
-                                <tr class="bg-gray-100 text-left text-gray-600 uppercase tracking-wider">
-                                    <th class="py-2 px-3 border-b">Komponen/Mesin</th>
-                                    <th class="py-2 px-3 border-b text-right">Isi Dus</th>
-                                    <th class="py-2 px-3 border-b text-right">Total Pcs</th>
-                                    <th class="py-2 px-3 border-b text-right">Target Shift</th>
-                                    <th class="py-2 px-3 border-b text-right">Jam Butuh</th>
-                                    <th class="py-2 px-3 border-b text-right">Shift Butuh</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                
-                matchingProducts.forEach((product, index) => {
-                    const rowClass = (index % 2 === 0) ? '' : 'bg-gray-50';
-
-                    const pcsPerBox = product.pcs_per_box;
-                    const totalPcsOrdered = orderQtyDus * pcsPerBox;
-                    const targetPerShiftPcs = product.targetPerShift;
-                    
-                    const shiftNet = totalPcsOrdered / targetPerShiftPcs;
-                    const hoursNet = shiftNet * HOURS_PER_SHIFT;
-
-                    const machine = product.machine;
-                    const lastBusyShiftNet = estimationMachineTracker[machine] || 0;
-                    
-                    // Accumulate workload for this machine
-                    estimationMachineTracker[machine] = lastBusyShiftNet + shiftNet;
-                    
-                    // Update global max shift needed (based on accumulated machine time)
-                    // Note: We calculate longestShiftNet AFTER processing all inputs to see the bottleneck machine's total load
-                    
-                    const displayedShift = Math.ceil(shiftNet);
-                    const formattedHoursMinutes = formatHoursMinutes(hoursNet);
-
-                    pendingScheduleComponents.push({
-                        productCode: product.code,
-                        productName: product.name, 
-                        machine: product.machine,
-                        machine_optional: product.machine_optional, 
-                        shiftNet: shiftNet,
-                        orderQty: orderQtyDus // Store Order Qty here for Auto Schedule
-                    });
-
-                    // UNDO: Menghapus teks keterangan (Bulat: ...)
-                    combinedDetailsHTML += `
-                        <tr class="border-b hover:bg-gray-100 ${rowClass}">
-                            <td class="py-2 px-3 text-gray-700"><strong>${product.name}</strong> (${product.machine})</td>
-                            <td class="py-2 px-3 text-right">${integerFormatter.format(pcsPerBox)}</td>
-                            <td class="py-2 px-3 text-right font-bold">${integerFormatter.format(totalPcsOrdered)}</td>
-                            <td class="py-2 px-3 text-right">${integerFormatter.format(targetPerShiftPcs)}</td>
-                            <td class="py-2 px-3 text-right font-medium text-red-600">${formattedHoursMinutes}</td>
-                            <td class="py-2 px-3 text-right font-medium text-blue-600">
-                                ${decimalFormatter.format(shiftNet)}
-                            </td>
-                        </tr>
-                    `;
-                });
-                
-                combinedDetailsHTML += `
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                `;
-            }
-
-            if (hasError || !anyProductFound) {
-                if(!anyProductFound && !hasError) showMessage("Mohon masukkan minimal satu produk yang valid.", "error");
-                document.getElementById('results').classList.add('hidden');
-                document.getElementById('autoSchedulePanel').classList.add('hidden');
-                return;
-            }
-
-            // Calculate longest shift based on ACCUMULATED machine loads
-            for (const machine in estimationMachineTracker) {
-                if (estimationMachineTracker[machine] > longestShiftNet) {
-                    longestShiftNet = estimationMachineTracker[machine];
-                }
-            }
-
-            const totalShiftsBooked = Math.ceil(longestShiftNet);
-            const totalHoursNet = longestShiftNet * HOURS_PER_SHIFT;
-            const totalHoursBooked = Math.round(totalHoursNet);
-            const totalDaysCalculated = totalShiftsBooked / SHIFTS_PER_DAY;
-            const totalDaysBooked = Math.ceil(totalDaysCalculated);
-            const formattedTotalHoursNet = formatHoursMinutes(totalHoursNet);
-
-            const pdfButton = document.getElementById('exportPdfButton');
-            if (isLoggedIn) {
-                pdfButton.classList.remove('hidden');
-            } else {
-                pdfButton.classList.add('hidden');
-            }
-
-            document.getElementById('resultHours').textContent = `${integerFormatter.format(totalHoursBooked)} Jam`;
-            document.getElementById('resultShifts').textContent = `${totalShiftsBooked} Shift`;
-            document.getElementById('resultDays').textContent = `${totalDaysBooked} Hari`;
-
-            const simplifiedFinalSummaryHTML = `
-                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                    <h3 class="text-xl font-bold text-green-900 mb-3">Ringkasan Estimasi Total</h3>
-                    <ul class="list-disc list-inside space-y-1 ml-2 text-base text-green-800">
-                        <li>Total Komponen Diproses: ${pendingScheduleComponents.length} Item</li>
-                        <li>Total Shift Paralel Tertinggi: <span class="font-bold">${decimalFormatter.format(longestShiftNet)} Shift</span>
-                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Mesin tersibuk menentukan durasi total proyek ini)</span>
-                        </li>
-                        <li class="font-bold">Durasi Kalender: ${totalDaysBooked} Hari
-                            <span class="text-xs font-normal text-gray-500 block mt-0.5 ml-5">(Asumsi kerja 3 Shift/Hari non-stop)</span>
-                        </li>
-                    </ul>
-                </div>
-            `;
-
-            document.getElementById('estimationDetails').innerHTML = simplifiedFinalSummaryHTML + combinedDetailsHTML;
-            document.getElementById('results').classList.remove('hidden');
-            
-            renderComponentSelectionList(pendingScheduleComponents);
-
-            showMessage(`Estimasi berhasil dihitung untuk ${pendingScheduleComponents.length} komponen!`, "info");
-
-            const autoSchedulePanel = document.getElementById('autoSchedulePanel');
-            if (isLoggedIn) {
-                autoSchedulePanel.classList.remove('hidden');
-                document.getElementById('autoScheduleStatus').classList.add('hidden');
-                document.getElementById('autoScheduleStartDate').focus();
-            } else {
-                autoSchedulePanel.classList.add('hidden'); 
-                componentSelectionPanel.classList.add('hidden');
-            }
-        }
-
-        function renderComponentSelectionList(components) {
-            const listContainer = document.getElementById('componentSelectionList');
-            const selectionContainer = document.getElementById('componentSelectionContainer');
-            const selectAllCheckbox = document.getElementById('selectAllComponents');
-
-            listContainer.innerHTML = ''; 
-
-            if (!components || components.length === 0) {
-                selectionContainer.classList.add('hidden'); 
-                return;
-            }
-
-            selectionContainer.classList.remove('hidden');
-            
-            const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-            components.forEach((component, index) => {
-                const shiftNet = component.shiftNet;
-                const shiftsRounded = Math.ceil(shiftNet);
-
-                const html = `
-                    <div class="flex items-center p-2 rounded-md hover:bg-gray-50">
-                        <input type="checkbox" id="component-check-${index}" value="${index}" class="component-checkbox rounded border-gray-400 focus:ring-indigo-500" checked>
-                        <label for="component-check-${index}" class="ml-3 text-sm text-gray-700">
-                            <span class="font-bold">${component.productCode} - ${component.productName}</span> (${component.machine})
-                            <span class="block text-xs text-gray-500">${decimalFormatter.format(shiftNet)} Shift</span>
-                        </label>
-                    </div>
-                `;
-                listContainer.innerHTML += html;
-            });
-
-            selectAllCheckbox.checked = true;
-        }
-
-        window.toggleSelectAll = function(masterCheckbox) {
-            const checkboxes = document.querySelectorAll('.component-checkbox');
-            checkboxes.forEach(cb => {
-                cb.checked = masterCheckbox.checked;
-            });
-        }
-
-        window.handleAutoScheduleClick = async function() {
-            const startDateStr = document.getElementById('autoScheduleStartDate').value.trim();
-            if (!startDateStr) {
-                 showMessage("Mohon masukkan Tanggal Mulai Produksi Ideal.", "error");
-                 return;
-            }
-            const startDate = parseDMY(startDateStr);
-            if (!startDate) {
-                showMessage("Format Tanggal Mulai tidak valid (DD/MM/YYYY).", "error");
-                return;
-            }
-
-            if (isLoggedIn) {
-                const selectedCheckboxes = document.querySelectorAll('.component-checkbox:checked');
-                const selectedComponents = Array.from(selectedCheckboxes).map(cb => {
-                    return pendingScheduleComponents[parseInt(cb.value)];
-                });
-
-                if (selectedComponents.length === 0) {
-                    showMessage("Tidak ada komponen yang dipilih untuk dijadwalkan. Harap pilih minimal satu komponen.", "error");
-                    return;
-                }
-
-                showMessage(`Memulai simulasi penjadwalan otomatis untuk ${selectedComponents.length} komponen...`, "info");
-
-                const results = await autoScheduleProduction_Simple(startDate, selectedComponents);
-
-                if (results.error) {
-                    showMessage(results.error, "error");
-                } else {
-
-                    const statusMessage = document.getElementById('autoScheduleStatus');
-                    statusMessage.classList.remove('hidden');
-                    
-                    // UPDATE: Tampilan hasil simulasi sekarang menggunakan tombol yang lebih jelas
-                    statusMessage.innerHTML = `
-                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
-                            <p class="font-bold">Simulasi Berhasil!</p>
-                            <p>Sistem telah menemukan slot kosong untuk ${results.scheduledCount} dari ${selectedComponents.length} komponen.</p>
-                            <ul class="list-disc list-inside text-sm mt-2 mb-4">
-                                <li>Tanggal Mulai: ${startDateStr}</li>
-                                <li>Estimasi Selesai: ${results.endDateDisplay}</li>
-                                <li>Total Slot Dijadwalkan: ${results.proposedSlots.length} Slot</li>
-                            </ul>
-                            
-                            <div class="flex items-center mt-2">
-                                <button onclick='confirmAndSaveSchedule(${JSON.stringify(results.proposedSlots)}, "${startDateStr}", "${results.endDateDisplay}")' 
-                                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 flex items-center">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
-                                    </svg>
-                                    Simpan ke Database & Lihat Tabel
-                                </button>
-                                <span class="text-xs text-gray-500 ml-3 italic">Klik untuk menerapkan hasil ke Tabel Perencanaan.</span>
-                            </div>
-                        </div>
-                    `;
-                }
-
-            } else {
-                // ... existing code for non-admin ...
-                const endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 6);
-                const endDateStr = formatDateToDMY(endDate);
-
-                document.getElementById('startDate').value = startDateStr;
-                document.getElementById('endDate').value = endDateStr;
-
-                showView('planning');
-                renderPlanningTable(startDateStr, endDateStr);
-            }
-        }
-
-        window.confirmAndSaveSchedule = async function(slots, startDateStr, endDateDisplay) {
-            if (!isLoggedIn) {
-                 showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menyimpan jadwal otomatis.", "error");
-                 return;
-            }
-
-            showMessage(`Menyimpan ${slots.length} slot jadwal ke database...`, "info");
-
-            let errorCount = 0;
-            const errors = [];
-            const dataToInsert = slots.map(slot => ({
-                mesin: slot.machine,
-                schedule_date: slot.dbDate,
-                schedule_shift: slot.shift,
-                product_code: slot.productCode, 
-                product_name: slot.productName,
-                order_qty: slot.orderQty, // INSERT QTY
-                timestamp: new Date().toISOString()
-            }));
+            const startDb = formatDateToYMD(startDateParsed);
+            const endDb = formatDateToYMD(endDateParsed);
 
             try {
-                const { error } = await supabase
+                const { data, error } = await supabase
                     .from(SCHEDULE_TABLE_NAME)
-                    .insert(dataToInsert);
+                    .select('*')
+                    .gte('schedule_date', startDb)
+                    .lte('schedule_date', endDb);
 
-                if (error) {
-                    errorCount = slots.length;
-                    errors.push(error.message);
-                }
+                if (error) throw error;
+
+                const newScheduleData = {};
+                data.forEach(item => {
+                    const key = `${item.mesin}|${item.schedule_date}|${item.schedule_shift}`;
+                    newScheduleData[key] = item;
+                });
+                scheduleData = newScheduleData;
 
             } catch (e) {
-                errorCount = slots.length;
-                errors.push(e.message);
-            }
-
-            if (errorCount > 0) {
-                 showMessage(`Gagal menyimpan ${errorCount} slot. ${errors[0]}. Cek RLS atau kolom database.`, "error");
-            } else {
-                 showMessage(`Berhasil! ${slots.length} slot jadwal telah disimpan. Mengalihkan ke Tabel Perencanaan...`, "info");
-            }
-
-            document.getElementById('autoScheduleStatus').classList.add('hidden');
-            
-            if (errorCount === 0 && startDateStr && endDateDisplay) {
-                await fetchAllScheduleData(); 
-
-                const startDate = parseDMY(startDateStr);
-                let weeklyEndDateStr = endDateDisplay; 
-
-                if (startDate) { 
-                    // Default view 1 minggu ke depan agar tabel tidak terlalu lebar
-                    const weeklyEndDate = new Date(startDate);
-                    weeklyEndDate.setDate(startDate.getDate() + 6); 
-                    weeklyEndDateStr = formatDateToDMY(weeklyEndDate); 
-                } 
-
-                // Set input tanggal di tab Planning
-                document.getElementById('startDate').value = startDateStr;
-                document.getElementById('endDate').value = weeklyEndDateStr; 
-
-                // Pindah ke Tab Planning & Render Tabel
-                showView('planning');
-                renderPlanningTable(startDateStr, weeklyEndDateStr); 
+                console.error("Error fetching schedule data:", e);
+                scheduleData = {}; 
+                if (e.message && e.message.includes("Could not find the table")) {
+                    showMessage(`Gagal memuat: Tabel '${SCHEDULE_TABLE_NAME}' tidak ditemukan di Supabase. Mohon buat tabel tersebut.`, "error");
+                } else {
+                    showMessage("Gagal memuat data jadwal dari database.", "error");
+                }
             }
         }
 
-        async function autoScheduleProduction_Simple(startDate, components) {
+        async function fetchAllScheduleData() {
+            if (!supabase) return;
 
-            const proposedSlots = [];
-            let totalComponents = components.length;
-            let scheduledCount = 0;
-            const simulationSlotTracker = new Set(); 
-            let latestEndDate = new Date(startDate); 
+            try {
+                const { data, error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .select('*')
+                    .order('product_code', { ascending: true })
+                    .order('schedule_date', { ascending: true })
+                    .order('mesin', { ascending: true })
+                    .order('schedule_shift', { ascending: true });
 
-            const date60DaysLater = new Date(startDate);
-            date60DaysLater.setDate(date60DaysLater.getDate() + 60); 
+                if (error) throw error;
+                masterScheduleData = data;
 
-            const date60DaysLaterStr = formatDateToDMY(date60DaysLater);
-            const startDateStr = formatDateToDMY(startDate);
-
-            await fetchScheduleData(startDateStr, date60DaysLaterStr);
-
-            for (const component of components) {
-                let remainingShiftNet = component.shiftNet; 
-                const totalShiftNeeded = Math.ceil(remainingShiftNet); 
-
-                const machinesToCheck = [];
-                if (component.machine) {
-                    machinesToCheck.push(component.machine.trim().toUpperCase());
-                }
-                if (component.machine_optional) {
-                     component.machine_optional.split(',')
-                        .map(m => m.trim().toUpperCase())
-                        .filter(m => m && !machinesToCheck.includes(m))
-                        .forEach(m => machinesToCheck.push(m));
-                }
-                if (machinesToCheck.length === 0) {
-                     console.warn(`Komponen ${component.productCode} (${component.productName}) tidak memiliki mesin, dilewati.`);
-                     totalComponents--; 
-                     continue;
-                }
-                
-                let chosenMachine = null; 
-                let machineFound = false;
-
-                for (const machineToFind of machinesToCheck) {
-                    let availableCapacityInShifts = 0;
-                    let tempDate = new Date(startDate);
-
-                    for (let i = 0; i < 60; i++) { 
-                        const isWeekend = tempDate.getDay() === 0 || tempDate.getDay() === 6;
-                        if (!isWeekend) {
-                            const dbDate = formatDateToYMD(tempDate);
-                            for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
-                                const shiftName = `Shift ${s}`;
-                                const key = `${machineToFind}|${dbDate}|${shiftName}`;
-                                
-                                if (!scheduleData[key] && !simulationSlotTracker.has(key)) {
-                                    availableCapacityInShifts++;
-                                }
-                            }
-                        }
-                        tempDate.setDate(tempDate.getDate() + 1);
-
-                        if (availableCapacityInShifts >= totalShiftNeeded) {
-                            chosenMachine = machineToFind;
-                            machineFound = true;
-                            break; 
-                        }
-                    }
-
-                    if (machineFound) {
-                        break; 
-                    }
-                }
-
-                if (machineFound && chosenMachine) {
-                    let scheduled = false;
-                    let currentWorkingDate = new Date(startDate); 
-
-                    for (let i = 0; i < 60; i++) {
-                        if (remainingShiftNet <= 0) {
-                            scheduled = true;
-                            const componentEndDate = new Date(currentWorkingDate);
-                            componentEndDate.setDate(componentEndDate.getDate() - 1); 
-                            if (componentEndDate > latestEndDate) {
-                                latestEndDate = new Date(componentEndDate);
-                            }
-                            break;
-                        }
-
-                        const isWeekend = currentWorkingDate.getDay() === 0 || currentWorkingDate.getDay() === 6;
-                        if (isWeekend) {
-                            currentWorkingDate.setDate(currentWorkingDate.getDate() + 1);
-                            continue; 
-                        }
-
-                        const dbDate = formatDateToYMD(currentWorkingDate);
-
-                        for (let s = 1; s <= SHIFTS_PER_DAY; s++) {
-                            if (remainingShiftNet <= 0) break;
-                            const shiftName = `Shift ${s}`;
-                            
-                            const key = `${chosenMachine}|${dbDate}|${shiftName}`;
-
-                            if (!scheduleData[key] && !simulationSlotTracker.has(key)) {
-                                proposedSlots.push({
-                                    machine: chosenMachine, 
-                                    shift: shiftName,
-                                    dbDate: dbDate,
-                                    productCode: component.productCode,
-                                    productName: component.productName,
-                                    orderQty: component.orderQty // PASS QTY TO SLOT
-                                });
-
-                                simulationSlotTracker.add(key); 
-                                remainingShiftNet -= 1; 
-                            }
-                        }
-                        currentWorkingDate.setDate(currentWorkingDate.getDate() + 1);
-                    }
-                    
-                    if (scheduled) {
-                        scheduledCount++;
-                    } else {
-                        return { error: `Gagal menjadwalkan ${component.productCode} (Mesin ${chosenMachine}) - Terjadi error internal.` };
-                    }
-
+            } catch (e) {
+                console.error("Error fetching all schedule data for master table:", e);
+                masterScheduleData = [];
+                if (e.message && e.message.includes("Could not find the table")) {
+                     showMessage(`Gagal memuat data Master Jadwal: Tabel '${SCHEDULE_TABLE_NAME}' tidak ditemukan.`, "error");
+                } else if (e.message && e.message.includes("fetch")) {
+                     showMessage(`Gagal memuat data Master Jadwal: Terjadi error jaringan (Failed to fetch). Ini mungkin karena RLS (Row Level Security) pada tabel '${SCHEDULE_TABLE_NAME}' memblokir pembacaan.`, "error");
                 } else {
-                    return { error: `Gagal menjadwalkan ${component.productCode}. Kapasitas di mesin [${machinesToCheck.join(', ')}] penuh (membutuhkan ${totalShiftNeeded} slot).` };
+                     showMessage("Gagal memuat semua data jadwal dari database.", "error");
                 }
             }
-
-            const finalEndDateDisplay = formatDateToDMY(latestEndDate); 
-
-            return {
-                proposedSlots: proposedSlots,
-                totalComponents: totalComponents,
-                scheduledCount: scheduledCount,
-                endDateDisplay: finalEndDateDisplay,
-            };
         }
 
         async function exportEstimationToPDF() {
@@ -4069,6 +4229,404 @@
             } catch (e) {
                 console.error("Gagal mengekspor Data Master Excel:", e);
                 showMessage("Terjadi kesalahan saat membuat file Excel.", "error");
+            }
+        }
+        
+        window.confirmAndSaveSchedule = async function(slots, startDateStr, endDateDisplay) {
+            if (!isLoggedIn) {
+                 showMessage("Akses ditolak. Silakan Login sebagai Admin untuk menyimpan jadwal otomatis.", "error");
+                 return;
+            }
+
+            showMessage(`Menyimpan ${slots.length} slot jadwal ke database...`, "info");
+
+            let errorCount = 0;
+            const errors = [];
+            const dataToInsert = slots.map(slot => ({
+                mesin: slot.machine,
+                schedule_date: slot.dbDate,
+                schedule_shift: slot.shift,
+                product_code: slot.productCode, 
+                product_name: slot.productName,
+                order_qty: slot.orderQty, // INSERT QTY
+                timestamp: new Date().toISOString()
+            }));
+
+            try {
+                const { error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .insert(dataToInsert);
+
+                if (error) {
+                    errorCount = slots.length;
+                    errors.push(error.message);
+                }
+
+            } catch (e) {
+                errorCount = slots.length;
+                errors.push(e.message);
+            }
+
+            if (errorCount > 0) {
+                 showMessage(`Gagal menyimpan ${errorCount} slot. ${errors[0]}. Cek RLS atau kolom database.`, "error");
+            } else {
+                 showMessage(`Berhasil! ${slots.length} slot jadwal telah disimpan. Mengalihkan ke Tabel Perencanaan...`, "info");
+            }
+
+            document.getElementById('autoScheduleStatus').classList.add('hidden');
+            
+            if (errorCount === 0 && startDateStr && endDateDisplay) {
+                await fetchAllScheduleData(); 
+
+                const startDate = parseDMY(startDateStr);
+                let weeklyEndDateStr = endDateDisplay; 
+
+                if (startDate) { 
+                    // Default view 1 minggu ke depan agar tabel tidak terlalu lebar
+                    const weeklyEndDate = new Date(startDate);
+                    weeklyEndDate.setDate(startDate.getDate() + 6); 
+                    weeklyEndDateStr = formatDateToDMY(weeklyEndDate); 
+                } 
+
+                // Set input tanggal di tab Planning
+                document.getElementById('startDate').value = startDateStr;
+                document.getElementById('endDate').value = weeklyEndDateStr; 
+
+                // Pindah ke Tab Planning & Render Tabel
+                showView('planning');
+                renderPlanningTable(startDateStr, weeklyEndDateStr); 
+            }
+        }
+        
+        // --- NEW: Handle Auto Schedule Click ---
+        window.handleAutoScheduleClick = async function() {
+            const startDateStr = document.getElementById('autoScheduleStartDate').value.trim();
+            if (!startDateStr) {
+                 showMessage("Mohon masukkan Tanggal Mulai Produksi Ideal.", "error");
+                 return;
+            }
+            const startDate = parseDMY(startDateStr);
+            if (!startDate) {
+                showMessage("Format Tanggal Mulai tidak valid (DD/MM/YYYY).", "error");
+                return;
+            }
+
+            if (isLoggedIn) {
+                const selectedCheckboxes = document.querySelectorAll('.component-checkbox:checked');
+                const selectedComponents = Array.from(selectedCheckboxes).map(cb => {
+                    return pendingScheduleComponents[parseInt(cb.value)];
+                });
+
+                if (selectedComponents.length === 0) {
+                    showMessage("Tidak ada komponen yang dipilih untuk dijadwalkan. Harap pilih minimal satu komponen.", "error");
+                    return;
+                }
+
+                showMessage(`Memulai simulasi penjadwalan otomatis untuk ${selectedComponents.length} komponen...`, "info");
+
+                const results = await autoScheduleProduction_Simple(startDate, selectedComponents);
+
+                if (results.error) {
+                    showMessage(results.error, "error");
+                } else {
+
+                    const statusMessage = document.getElementById('autoScheduleStatus');
+                    statusMessage.classList.remove('hidden');
+                    
+                    // UPDATE: Tampilan hasil simulasi sekarang menggunakan tombol yang lebih jelas
+                    statusMessage.innerHTML = `
+                        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
+                            <p class="font-bold">Simulasi Berhasil!</p>
+                            <p>Sistem telah menemukan slot kosong untuk ${results.scheduledCount} dari ${selectedComponents.length} komponen.</p>
+                            <ul class="list-disc list-inside text-sm mt-2 mb-4">
+                                <li>Tanggal Mulai: ${startDateStr}</li>
+                                <li>Estimasi Selesai: ${results.endDateDisplay}</li>
+                                <li>Total Slot Dijadwalkan: ${results.proposedSlots.length} Slot</li>
+                            </ul>
+                            
+                            <div class="flex items-center mt-2">
+                                <button onclick='confirmAndSaveSchedule(${JSON.stringify(results.proposedSlots)}, "${startDateStr}", "${results.endDateDisplay}")' 
+                                        class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded shadow-md transition duration-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                        <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" />
+                                    </svg>
+                                    Simpan ke Database & Lihat Tabel
+                                </button>
+                                <span class="text-xs text-gray-500 ml-3 italic">Klik untuk menerapkan hasil ke Tabel Perencanaan.</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+            } else {
+                // ... existing code for non-admin ...
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 6);
+                const endDateStr = formatDateToDMY(endDate);
+
+                document.getElementById('startDate').value = startDateStr;
+                document.getElementById('endDate').value = endDateStr;
+
+                showView('planning');
+                renderPlanningTable(startDateStr, endDateStr);
+            }
+        }
+        
+        function renderComponentSelectionList(components) {
+            const listContainer = document.getElementById('componentSelectionList');
+            const selectionContainer = document.getElementById('componentSelectionContainer');
+            const selectAllCheckbox = document.getElementById('selectAllComponents');
+
+            listContainer.innerHTML = ''; 
+
+            if (!components || components.length === 0) {
+                selectionContainer.classList.add('hidden'); 
+                return;
+            }
+
+            selectionContainer.classList.remove('hidden');
+            
+            const decimalFormatter = new Intl.NumberFormat('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            components.forEach((component, index) => {
+                const shiftNet = component.shiftNet;
+                const shiftsRounded = Math.ceil(shiftNet);
+
+                const html = `
+                    <div class="flex items-center p-2 rounded-md hover:bg-gray-50">
+                        <input type="checkbox" id="component-check-${index}" value="${index}" class="component-checkbox rounded border-gray-400 focus:ring-indigo-500" checked>
+                        <label for="component-check-${index}" class="ml-3 text-sm text-gray-700">
+                            <span class="font-bold">${component.productCode} - ${component.productName}</span> (${component.machine})
+                            <span class="block text-xs text-gray-500">${decimalFormatter.format(shiftNet)} Shift</span>
+                        </label>
+                    </div>
+                `;
+                listContainer.innerHTML += html;
+            });
+
+            selectAllCheckbox.checked = true;
+        }
+
+        window.toggleSelectAll = function(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.component-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = masterCheckbox.checked;
+            });
+        }
+        
+        // --- NEW: Toggle & Logic for Add Schedule Modal ---
+        window.toggleScheduleAddModal = function(show) {
+             const modal = document.getElementById('scheduleAddModal');
+             if (modal) modal.classList.toggle('hidden', !show);
+        }
+
+        window.openAddScheduleModal = function(machineName, dateStr, shift) {
+            const dateParts = dateStr.split('-');
+            const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
+
+            document.getElementById('addScheduleMachine').value = machineName;
+            document.getElementById('addScheduleDate').value = displayDate;
+            document.getElementById('addScheduleShift').value = shift;
+            
+            // Reset fields
+            document.getElementById('addScheduleCode').value = '';
+            document.getElementById('addScheduleQty').value = '';
+            document.getElementById('addScheduleName').innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
+            document.getElementById('addSlotStatusMessage').textContent = '';
+
+            toggleScheduleAddModal(true);
+            checkSlotAvailability_AddModal();
+        }
+
+        window.findProductNameByCode_AddModal = function() {
+            const codeInput = document.getElementById('addScheduleCode');
+            const nameDropdown = document.getElementById('addScheduleName'); 
+            const code = codeInput.value.trim().toUpperCase();
+
+            nameDropdown.innerHTML = '';
+
+            if (!code) {
+                nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
+                checkSlotAvailability_AddModal(null);
+                return;
+            }
+
+            const matchingProducts = Object.values(productionData).filter(p => p.code === code);
+
+            if (matchingProducts.length > 0) {
+                if (matchingProducts.length > 1) {
+                     nameDropdown.innerHTML = '<option value="" disabled selected>Pilih Komponen...</option>';
+                }
+
+                matchingProducts.forEach(product => {
+                    const option = document.createElement('option');
+                    option.value = product.name; 
+                    option.textContent = product.name; 
+                    nameDropdown.appendChild(option);
+                });
+
+                if (matchingProducts.length === 1) {
+                     nameDropdown.value = matchingProducts[0].name;
+                     handleComponentSelectionChange_AddModal();
+                }
+            } else {
+                nameDropdown.innerHTML = '<option value="" disabled>Kode tidak ditemukan</option>';
+                checkSlotAvailability_AddModal(null);
+            }
+        }
+
+        window.handleComponentSelectionChange_AddModal = function() {
+            const code = document.getElementById('addScheduleCode').value.trim().toUpperCase();
+            const componentName = document.getElementById('addScheduleName').value;
+
+            if (!code || !componentName) {
+                checkSlotAvailability_AddModal(null);
+                return;
+            }
+            
+            const product = Object.values(productionData).find(p => p.code === code && p.name === componentName);
+            checkSlotAvailability_AddModal(product);
+        }
+
+        window.checkSlotAvailability_AddModal = async function(productData = null) {
+            const messageEl = document.getElementById('addSlotStatusMessage');
+            if (!messageEl) return;
+
+            const machineDropdown = document.getElementById('addScheduleMachine');
+            const dateStr = document.getElementById('addScheduleDate').value;
+            const shift = document.getElementById('addScheduleShift').value;
+            const codeInput = document.getElementById('addScheduleCode');
+            const code = codeInput.value.trim().toUpperCase();
+
+            if (!isLoggedIn || !code || !dateStr || !shift) {
+                messageEl.textContent = ''; return;
+            }
+
+            const parsedDate = parseDMY(dateStr);
+            if (!parsedDate) {
+                 messageEl.textContent = 'Format Tanggal Salah';
+                 messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
+                 return;
+            }
+            const dbDate = formatDateToYMD(parsedDate);
+
+             if (!productData) {
+                 const componentName = document.getElementById('addScheduleName').value;
+                 if(componentName) {
+                    productData = Object.values(productionData).find(p => p.code === code && p.name === componentName);
+                 } else {
+                    productData = Object.values(productionData).find(p => p.code === code);
+                 }
+            }
+
+            if (!productData) {
+                 messageEl.textContent = ''; 
+                 return;
+            }
+            
+            // Check if selected machine is valid for this product
+            const machinesToCheck = [];
+            if (productData.machine) machinesToCheck.push(productData.machine);
+            if (productData.machine_optional) {
+                productData.machine_optional.split(',').map(m => m.trim().toUpperCase()).filter(m => m && !machinesToCheck.includes(m)).forEach(m => machinesToCheck.push(m));
+            }
+            
+            const selectedMachine = machineDropdown.value;
+            let statusMessage = '';
+            let messageColor = '';
+            
+            if (!machinesToCheck.includes(selectedMachine)) {
+                 statusMessage = `Peringatan: Produk ini biasanya diproses di ${machinesToCheck.join(', ')}`;
+                 messageColor = 'text-orange-600';
+            } else {
+                 statusMessage = 'Produk kompatibel dengan mesin ini.';
+                 messageColor = 'text-green-600';
+            }
+            
+            // Final check: Is slot empty?
+            const key = `${selectedMachine}|${dbDate}|${shift}`;
+            const scheduleItem = scheduleData[key];
+            
+            if (scheduleItem) {
+                statusMessage = "SLOT SUDAH TERISI!";
+                messageColor = 'text-red-600';
+            }
+
+            messageEl.textContent = statusMessage;
+            messageEl.className = `text-sm font-bold mt-3 text-center ${messageColor}`;
+        }
+
+        window.saveScheduleSlotFromModal = async function(forceWeekend = false) {
+             if (!isLoggedIn) {
+                showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
+                return;
+            }
+            
+            const machine = document.getElementById('addScheduleMachine').value;
+            const dateStr = document.getElementById('addScheduleDate').value;
+            const shift = document.getElementById('addScheduleShift').value;
+            const code = document.getElementById('addScheduleCode').value.trim();
+            const name = document.getElementById('addScheduleName').value;
+            const qty = document.getElementById('addScheduleQty').value;
+
+            if (!machine || !dateStr || !shift || !code) {
+                 showMessage("Data tidak lengkap.", "error");
+                 return;
+            }
+
+            const parsedDate = parseDMY(dateStr);
+            if (!parsedDate) {
+                 showMessage("Format Tanggal tidak valid.", "error");
+                 return;
+            }
+
+            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
+            if (isWeekend && !forceWeekend) {
+                toggleWeekendConfirmModal(true, 'add_modal', dateStr);
+                return;
+            }
+
+            const dbDate = formatDateToYMD(parsedDate);
+            const key = `${machine}|${dbDate}|${shift}`;
+            
+            if (scheduleData[key]) {
+                 showMessage("Gagal: Slot sudah terisi.", "error");
+                 return;
+            }
+
+            const dataToSave = {
+                mesin: machine, 
+                schedule_date: dbDate, 
+                schedule_shift: shift,
+                product_code: code,
+                product_name: name,
+                order_qty: qty, 
+                timestamp: new Date().toISOString()
+            };
+            
+            try {
+                const { error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .insert([dataToSave])
+                    .select();
+
+                if (error) throw error;
+
+                showMessage(`Jadwal baru berhasil ditambahkan!`, "info");
+                toggleScheduleAddModal(false);
+
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                
+                await fetchAllScheduleData(); 
+                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
+                if (start && end) {
+                    renderPlanningTable(start, end);
+                }
+
+            } catch (e) {
+                console.error("Error saving new schedule slot:", e);
+                showMessage(`Gagal menyimpan: ${e.message}`, "error");
             }
         }
 
