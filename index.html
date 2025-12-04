@@ -128,9 +128,30 @@
             opacity: 1;
             transform: scale(1);
         }
+
+        /* CURSOR FOLLOWER FOR DUPLICATE */
+        #cursorFollower {
+            position: fixed;
+            pointer-events: none; /* Penting agar klik tembus ke elemen di bawahnya */
+            z-index: 9999;
+            display: none;
+            background: rgba(79, 70, 229, 0.9); /* Indigo-600 with opacity */
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: translate(15px, 15px); /* Offset sedikit dari kursor */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen">
+
+    <!-- Cursor Follower Element -->
+    <div id="cursorFollower">Paste Item</div>
 
     <div id="app" class="bg-white p-6 md:p-10 rounded-xl shadow-2xl">
 
@@ -775,6 +796,11 @@
         let pendingWeekendAction = null; 
         let pendingDropUpdate = null;
         let pendingSwapUpdate = null; // New for Swap
+        
+        // --- DUPLICATE STATE ---
+        let isDuplicating = false;
+        let sourceDuplicateItem = null;
+        let pendingDuplicateData = null;
 
         const STATIC_MACHINE_DATA = [
             { code: 'A01', type: 'HC -450 T' }, { code: 'A02', type: 'HC -450 T' }, { code: 'A03', type: 'CF -600 T' },
@@ -803,6 +829,22 @@
             { code: 'D07', type: 'HWD -288 T' }, { code: 'D08', type: 'HWD -310 T' }, { code: 'D09', type: 'HWD -218 T' }
         ];
 
+        // --- MOUSE LISTENER UNTUK CURSOR FOLLOWER ---
+        document.addEventListener('mousemove', (e) => {
+            if (isDuplicating) {
+                const follower = document.getElementById('cursorFollower');
+                if (follower) {
+                    follower.style.left = (e.clientX + 10) + 'px';
+                    follower.style.top = (e.clientY + 10) + 'px';
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isDuplicating) {
+                cancelDuplicate();
+            }
+        });
 
         const HOURS_PER_SHIFT = 8;
         const SHIFTS_PER_DAY = 3;
@@ -825,6 +867,105 @@
             const decimalPart = decimalHours - hours;
             const minutes = Math.round(decimalPart * 60);
             return `${hours} Jam ${minutes} Menit`;
+        }
+        
+        // --- DUPLICATE FUNCTIONS ---
+        
+        window.startDuplicate = function(scheduleItem) {
+            if (!isLoggedIn) {
+                 showMessage("Akses ditolak. Silakan Login Admin.", "error");
+                 return;
+            }
+            isDuplicating = true;
+            sourceDuplicateItem = scheduleItem;
+            
+            const follower = document.getElementById('cursorFollower');
+            follower.textContent = `Paste: ${scheduleItem.product_code}`;
+            follower.style.display = 'block';
+            document.body.style.cursor = 'copy';
+            
+            showMessage("Mode Duplikat Aktif: Klik slot manapun untuk Paste (Tekan Esc untuk batal).", "info");
+        }
+
+        window.cancelDuplicate = function() {
+            isDuplicating = false;
+            sourceDuplicateItem = null;
+            document.getElementById('cursorFollower').style.display = 'none';
+            document.body.style.cursor = 'default';
+        }
+        
+        window.handleCellClick = async function(event) {
+            if (!isDuplicating || !sourceDuplicateItem) return;
+
+            // Cari elemen TD terdekat jika user klik child element
+            const cell = event.target.closest('td');
+            if (!cell) return;
+
+            const targetMachine = cell.getAttribute('data-machine');
+            const targetDate = cell.getAttribute('data-date');
+            const targetShift = cell.getAttribute('data-shift');
+
+            if (!targetMachine || !targetDate || !targetShift) return;
+
+            const newItem = {
+                mesin: targetMachine,
+                schedule_date: targetDate,
+                schedule_shift: targetShift,
+                product_code: sourceDuplicateItem.product_code,
+                product_name: sourceDuplicateItem.product_name,
+                order_qty: sourceDuplicateItem.order_qty,
+                timestamp: new Date().toISOString()
+            };
+            
+            // Cek Weekend
+            const dateObj = new Date(targetDate);
+            const isWeekend = (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+            
+            if (isWeekend) {
+                 pendingWeekendAction = 'paste_duplicate';
+                 pendingDuplicateData = newItem; // Simpan data sementara
+                 toggleWeekendConfirmModal(true, 'paste_duplicate', formatDateToDMY(dateObj));
+                 return;
+            }
+
+            await executeDuplicate(newItem);
+        }
+        
+        async function executeDuplicate(newItem) {
+             try {
+                // Hapus data lama jika ada (Overwrite logic)
+                const existing = Object.values(scheduleData).find(
+                    item => item.mesin === newItem.mesin && 
+                            item.schedule_date === newItem.schedule_date && 
+                            item.schedule_shift === newItem.schedule_shift
+                );
+                
+                if (existing) {
+                    await supabase.from(SCHEDULE_TABLE_NAME).delete().eq('id', existing.id);
+                }
+
+                const { error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .insert([newItem]);
+
+                if (error) throw error;
+
+                showMessage(`Berhasil menduplikat ke ${newItem.mesin} - ${formatDateToDMY(new Date(newItem.schedule_date))}`, "info");
+                
+                // Refresh
+                const start = document.getElementById('startDate').value;
+                const end = document.getElementById('endDate').value;
+                await fetchAllScheduleData();
+                if (start && end) {
+                    renderPlanningTable(start, end);
+                }
+                
+                cancelDuplicate();
+
+            } catch (e) {
+                console.error("Error duplicating:", e);
+                showMessage("Gagal menduplikat jadwal.", "error");
+            }
         }
 
         function getNextWorkday(date) {
@@ -1614,6 +1755,8 @@
                  executeSwap(); // New Swap Action
             } else if (pendingWeekendAction === 'add_modal') {
                  saveScheduleSlotFromModal(true);
+            } else if (pendingWeekendAction === 'paste_duplicate') {
+                 executeDuplicate(pendingDuplicateData);
             }
             
             pendingWeekendAction = null;
@@ -2533,6 +2676,7 @@
                                     data-machine="${machineName}"
                                     data-date="${d.dbDate}"
                                     data-shift="${shift}"
+                                    onclick="handleCellClick(event)"
                                     ondragover="allowDrop(event)"
                                     ondrop="handleDrop(event)"
                                     ondragenter="handleDragEnter(event)"
@@ -2543,10 +2687,10 @@
                                 let slotContent;
 
                                 if (scheduledCode) {
-                                    textClass = 'font-extrabold text-indigo-800'; // UBAH: Lebih tebal & gelap
+                                    textClass = 'font-extrabold text-indigo-800'; 
                                     const productName = scheduleItem.product_name || 'Nama?';
                                     if (d.isWeekend) {
-                                        textClass = 'font-extrabold text-red-900'; // UBAH: Lebih tebal & gelap untuk libur
+                                        textClass = 'font-extrabold text-red-900'; 
                                     }
 
                                     const draggableAttr = isLoggedIn ? `draggable="true" ondragstart="handleDragStart(event, '${scheduleId}', '${scheduledCode}')"` : '';
@@ -2554,20 +2698,33 @@
 
                                     slotContent = `
                                         <div class="flex flex-col items-center justify-center p-0 h-full space-y-0.5 w-full ${draggableClass}" ${draggableAttr}>
-                                            <span class="text-sm ${textClass}">${scheduledCode}</span> <!-- UBAH: text-xs jadi text-sm -->
-                                            <span class="text-xs font-semibold text-gray-700">${productName}</span> <!-- UBAH: text-[10px] jadi text-xs font-semibold -->
+                                            <span class="text-sm ${textClass}">${scheduledCode}</span> 
+                                            <span class="text-xs font-semibold text-gray-700">${productName}</span> 
                                             ${isLoggedIn ? `
-                                                <div class="flex space-x-1">
-                                                    <button onclick='startScheduleEdit(${JSON.stringify(scheduleItem)})' class="text-indigo-500 hover:text-indigo-700 p-0.5 rounded-full transition duration-100 ease-in-out" title="Edit Slot">
+                                                <div class="flex justify-between items-center w-full px-2 mt-1">
+                                                    <!-- Tombol Edit (Kiri) -->
+                                                    <button onclick='event.stopPropagation(); startScheduleEdit(${JSON.stringify(scheduleItem)})' 
+                                                            class="text-indigo-500 hover:text-indigo-700 p-0.5 rounded-full transition duration-100 ease-in-out" title="Edit Slot">
                                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
                                                             <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-5.605 5.605L7 12v3h3l3.586-3.586-2.828-2.828z" />
                                                         </svg>
                                                     </button>
+                                                    
+                                                    <!-- Tombol Duplicate (Tengah) -->
+                                                    <button onclick='event.stopPropagation(); startDuplicate(${JSON.stringify(scheduleItem)})'
+                                                            class="text-blue-500 hover:text-blue-700 p-0.5 rounded-full transition duration-100 ease-in-out" title="Duplicate Slot">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                                          <path d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z" />
+                                                          <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
+                                                        </svg>
+                                                    </button>
+
+                                                    <!-- Tombol Delete (Kanan) -->
                                                     ${(() => {
                                                         const dateParts = d.dbDate.split('-'); 
                                                         const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
                                                         return `
-                                                        <button onclick="prepareScheduleDelete('${scheduleId}', '${scheduledCode}', '${displayDate}', '${shift}')"
+                                                        <button onclick="event.stopPropagation(); prepareScheduleDelete('${scheduleId}', '${scheduledCode}', '${displayDate}', '${shift}')"
                                                                 class="text-red-500 hover:text-red-700 p-0.5 rounded-full transition duration-100 ease-in-out"
                                                                 title="Hapus Slot">
                                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -2590,7 +2747,7 @@
                                         slotContent = `
                                             <div class="group relative w-full h-full flex flex-col items-center justify-center">
                                                 <span class="text-gray-300 group-hover:hidden text-[10px]">Kosong</span>
-                                                <button onclick="openAddScheduleModal('${machineName}', '${d.dbDate}', '${shift}')" 
+                                                <button onclick="event.stopPropagation(); openAddScheduleModal('${machineName}', '${d.dbDate}', '${shift}')" 
                                                         class="add-slot-btn hidden group-hover:flex bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-full w-8 h-8 items-center justify-center shadow-sm border border-indigo-200"
                                                         title="Tambah Jadwal">
                                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
