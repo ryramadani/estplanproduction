@@ -1,57 +1,43 @@
-Website **Estimasi Produksi & Perencanaan Mesin** ini adalah aplikasi web terintegrasi yang dirancang untuk membantu PPIC (Production Planning and Inventory Control) atau manajer produksi dalam menghitung estimasi waktu produksi dan menjadwalkan penggunaan mesin secara visual.
+Website ini adalah Sistem Estimasi Produksi dan Perencanaan Mesin berbasis web yang dirancang untuk membantu perencanaan PPIC. Secara garis besar, sistem ini mengubah proses manual penghitungan target dan penjadwalan mesin menjadi digital dan otomatis.
 
-Berikut adalah penjelasan detail mengenai fitur-fitur yang tersedia beserta fungsinya, dibagi berdasarkan menu/tab utama:
+Berikut adalah penjelasan lengkap mengenai fitur dan alur kerjanya:
 
-### 1. Mode Pengguna & Keamanan
-* **Login Admin:**
-    * **Fungsi:** Mengamankan data sensitif dan mencegah perubahan tidak sah.
-    * **Fitur:** Tombol login di pojok kanan atas. Ketika login (password default di kode: `admin123`), pengguna mendapatkan akses penuh untuk menambah/mengedit/menghapus data, melakukan *drag-and-drop* jadwal, dan input manual. Pengguna tamu (tanpa login) hanya bisa melihat data (read-only).
+1. Fungsi Utama
+Estimasi Waktu Produksi: Menghitung secara otomatis berapa jam, shift, dan hari yang dibutuhkan untuk menyelesaikan sejumlah pesanan berdasarkan target rate mesin yang sudah tersimpan di database.
 
-### 2. Tab Estimasi Produksi (Halaman Utama)
-Fitur ini digunakan untuk menghitung berapa lama waktu yang dibutuhkan untuk menyelesaikan pesanan tertentu.
+Visualisasi Jadwal (Matriks): Menampilkan papan jadwal digital (Mesin vs Tanggal/Shift) untuk memantau mesin mana yang sibuk atau kosong.
 
-* **Kalkulator Estimasi Multi-Item:**
-    * **Fungsi:** Menghitung total jam, shift, dan hari yang dibutuhkan berdasarkan target produksi per shift yang tersimpan di Data Master.
-    * **Cara Kerja:** Pengguna memasukkan Kode Produk dan Jumlah Pesanan (dalam Dus). Sistem otomatis menarik data *pcs per box* dan *target per shift*, lalu menghitung beban kerjanya.
-* **Penjadwalan Otomatis (Simulasi):**
-    * **Fungsi:** Mencari slot kosong secara otomatis di mesin yang sesuai mulai dari tanggal yang diinginkan.
-    * **Cara Kerja:** Setelah estimasi dihitung, admin bisa mengklik "Jadwalkan Otomatis". Sistem akan memindai database jadwal, melewati slot yang sudah terisi, dan menyarankan slot waktu untuk produksi tersebut.
-* **Export PDF:**
-    * **Fungsi:** Membuat laporan resmi hasil estimasi.
-    * **Fitur:** Menghasilkan file PDF yang berisi ringkasan total waktu dan rincian per item, lengkap dengan kop surat/logo perusahaan.
+2. Tiga Modul Utama (Tab Navigasi)
+A. Estimasi Produksi (Kalkulator)
+Input: User memasukkan Kode Barang, Jumlah Order (Dus), dan preferensi Shift Mulai.
 
-### 3. Tab Perencanaan Mesin (Planning Board)
-Ini adalah "Jantung" dari aplikasi, berupa matriks visual (Gantt Chart sederhana) untuk memantau beban kerja mesin.
+Output: Sistem menghitung total beban kerja. Jika pesanan terdiri dari banyak komponen berbeda, sistem akan mencari "jalur kritis" (mesin tersibuk) untuk menentukan durasi total proyek.
 
-* **Matriks Jadwal (Visualisasi):**
-    * **Fungsi:** Melihat ketersediaan mesin secara *real-time*.
-    * **Tampilan:** Baris mewakili Mesin, Kolom mewakili Tanggal & Shift.
-    * **Indikator:**
-        * **Warna Putih:** Slot Kosong (Available).
-        * **Teks Tebal:** Slot Terisi (menampilkan Kode Produk).
-        * **Warna Merah:** Hari Libur/Akhir Pekan (Weekend).
-* **Drag & Drop Jadwal (Fitur Admin):**
-    * **Fungsi:** Memindahkan jadwal dengan cepat tanpa input ulang.
-    * **Fitur:** Admin dapat menyeret (drag) kotak jadwal dari satu tanggal/shift ke tanggal/shift lain. Fitur ini juga mendukung **Swap (Tukar Posisi)** jika slot tujuan sudah terisi, dengan konfirmasi pop-up.
-* **Input Manual & Validasi Konflik:**
-    * **Fungsi:** Menambahkan jadwal secara manual.
-    * **Validasi:** Sistem akan mengecek apakah mesin tersebut sudah penuh di tanggal/shift yang dipilih. Sistem juga akan memberi peringatan jika pengguna mencoba menjadwalkan di hari libur.
-* **Export Excel:**
-    * **Fungsi:** Mengunduh tampilan matriks jadwal ke dalam format `.xlsx` untuk keperluan laporan fisik atau arsip.
+Simulasi Otomatis: Memiliki fitur "Jadwalkan Otomatis" yang mencari slot kosong di kalender masa depan dan mengisinya secara cerdas tanpa menabrak jadwal yang sudah ada.
 
-### 4. Tab Data Master
-Pusat database untuk mengelola standar produksi dan data referensi.
+Export: Hasil perhitungan bisa diunduh menjadi PDF.
 
-* **Manajemen Produk (CRUD):**
-    * **Fungsi:** Menyimpan data standar setiap produk.
-    * **Data yang Disimpan:** Kode Barang, Nama Komponen, Mesin Utama, Mesin Optional, Isi per Dus, dan Target Output per Shift.
-    * **Kapasitas:** Menghitung otomatis kapasitas produksi dalam 3 shift.
-* **Manajemen Jadwal Terpusat (List View):**
-    * **Fungsi:** Melihat seluruh daftar jadwal dalam bentuk tabel (bukan matriks).
-    * **Fitur:** Pencarian (Search), Hapus Massal (Multi-delete), dan Export Data Jadwal ke Excel.
+B. Perencanaan Mesin (Matriks Jadwal)
+Tampilan: Tabel matriks yang memetakan Mesin Utama (Baris) melawan Tanggal & Shift 1/2/3 (Kolom).
 
-### 5. Fitur Teknis & UX (User Experience)
-* **Database Cloud (Supabase):** Data tersimpan secara online/persisten, sehingga tidak hilang saat browser di-refresh.
-* **Responsif:** Tampilan menyesuaikan layar (desktop atau mobile).
-* **Sticky Header:** Saat menggulir tabel jadwal yang panjang, nama mesin (kiri) dan tanggal (atas) tetap terlihat agar pengguna tidak bingung membaca data.
-* **Pencarian Real-time:** Fitur pencarian di Data Master langsung menyaring data saat pengguna mengetik.
+Interaktif:
+
+Drag & Drop: Admin bisa memindahkan jadwal dari satu hari ke hari lain atau menukar posisi jadwal hanya dengan mouse.
+
+Warna & Indikator: Slot libur (akhir pekan) berwarna merah, slot terisi berwarna tebal.
+
+CRUD Jadwal: Admin bisa menambah, mengedit, atau menghapus slot jadwal secara manual.
+
+Export: Matriks jadwal bisa diekspor ke Excel.
+
+C. Data Master (Database)
+Tempat menyimpan "Rumus" produksi: Kode Barang, Nama Komponen, Mesin Utama/Optional, Isi per Dus, dan Target Produksi per Shift.
+
+Data inilah yang menjadi acuan dasar perhitungan di modul Estimasi.
+
+3. Teknologi & Keamanan
+Database Realtime: Menggunakan Supabase sehingga data tersimpan di cloud dan sinkron antar pengguna.
+
+Akses Kontrol: Terdapat fitur Login Admin. Pengguna biasa hanya bisa melihat (View Only), sedangkan Admin bisa mengedit data, menyimpan jadwal, dan melakukan drag & drop.
+
+Validasi: Sistem mencegah bentrok jadwal (double booking) pada mesin yang sama di shift yang sama.
