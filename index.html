@@ -226,6 +226,10 @@
                     <input type="text" id="inputName" placeholder="Contoh: Komponen Standard X" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
                 </div>
                 <div>
+                    <label for="inputColor" class="block text-sm font-medium text-gray-700">Warna</label>
+                    <input type="text" id="inputColor" placeholder="Contoh: HITAM" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
+                </div>
+                <div>
                     <label for="inputMachine" class="block text-sm font-medium text-gray-700">Mesin Utama</label>
                     <input type="text" id="inputMachine" placeholder="Contoh: Mesin A01" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:focus:border-cyan-500 shadow-sm uppercase-input" oninput="this.value = this.value.toUpperCase()">
                 </div>
@@ -385,7 +389,12 @@
 
         <!-- VIEW 2: PERENCANAAN MESIN -->
         <div id="planningView" class="view-content hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Perencanaan Jadwal Mesin</h2>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Perencanaan Jadwal Mesin
+            </h2>
 
             <div class="mb-6 p-4 bg-gray-100 rounded-lg shadow-inner">
                 <form id="planningForm" onsubmit="handlePlanningFormSubmit(event)" class="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end">
@@ -405,6 +414,12 @@
                 </form>
             </div>
 
+            <!-- 
+                BAGIAN INI SAYA KOMENTARI (NON-AKTIFKAN) AGAR HILANG DARI TAMPILAN.
+                KARENA KODE JAVASCRIPT SUDAH DIBERI PENGAMAN (NULL CHECK),
+                MENGHAPUS/MENYEMBUNYIKAN BAGIAN INI TIDAK AKAN MERUSAK APLIKASI.
+            -->
+            <!-- 
             <div id="scheduleInputForm" class="mb-6 p-6 bg-cyan-50 rounded-xl border border-cyan-200 hidden">
                 <h3 class="text-lg font-bold text-cyan-800 mb-4">Input Slot Jadwal (Admin)</h3>
                 
@@ -435,7 +450,6 @@
                         <input type="text" id="inputScheduleCode" placeholder="Kode Brg" required class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm uppercase-input" oninput="this.value = this.value.toUpperCase()" onblur="findProductNameByCode()">
                     </div>
                     
-                    <!-- NEW INPUT: JUMLAH PESANAN -->
                     <div>
                         <label for="inputScheduleQty" class="block text-sm font-medium text-gray-700">Jml Order (Dus)</label>
                         <input type="number" id="inputScheduleQty" placeholder="0" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-cyan-500 focus:border-cyan-500 shadow-sm text-sm">
@@ -460,6 +474,7 @@
                 </form>
                 <p id="slotStatusMessage" class="text-sm font-bold mt-3 text-center"></p>
             </div>
+            -->
 
 
             <div id="planningTableContainer">
@@ -517,13 +532,17 @@
         <div id="masterView" class="view-content hidden">
             <div id="masterTableContainer">
                 <div class="mt-10 pt-4 border-t border-gray-200">
-                    <!-- UBAH: Header dibuat Flex untuk menampung tombol Export -->
+                    <!-- UBAH: Header dibuat Flex untuk menampung tombol Export & Icon -->
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold text-gray-800">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <!-- ICON DATABASE -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                            </svg>
                             Data Master Produksi Tersimpan
                             <span id="masterDataTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
                         </h2>
-                        <!-- TAMBAH: Tombol Export Excel untuk Data Master Produksi -->
+                        <!-- TOMBOL EXPORT -->
                         <button onclick="exportProductionMasterToExcel()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 rounded-lg transition duration-300 shadow-md text-sm flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -549,7 +568,11 @@
 
                 <div id="scheduleMasterSection" class="mt-10 pt-4 border-t border-gray-200">
                     <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-xl font-semibold text-gray-800">
+                        <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <!-- ICON ARCHIVE / TABLE -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
                             Data Master Jadwal Mesin Tersimpan
                             <span id="scheduleMasterTotalCount" class="text-lg font-normal text-gray-500 ml-2"></span>
                         </h2>
@@ -1035,8 +1058,12 @@
             estimationFormContainer.classList.add('hidden');
             resultsContainer.classList.add('hidden');
             masterTableContainer.classList.add('hidden');
-            scheduleInputForm.classList.remove('visible');
-            scheduleInputForm.classList.add('hidden');
+            
+            // UPDATE: Pengecekan jika elemen form ada
+            if (scheduleInputForm) {
+                scheduleInputForm.classList.remove('visible');
+                scheduleInputForm.classList.add('hidden');
+            }
 
             cancelScheduleEdit();
 
@@ -1056,9 +1083,12 @@
                  document.getElementById('planningForm').style.display = 'grid';
 
                  if (isLoggedIn) {
-                    scheduleInputForm.classList.remove('hidden');
-                    scheduleInputForm.classList.add('visible');
-                    checkSlotAvailability(null);
+                    // UPDATE: Hanya tampilkan jika elemen form masih ada
+                    if (scheduleInputForm) {
+                        scheduleInputForm.classList.remove('hidden');
+                        scheduleInputForm.classList.add('visible');
+                        checkSlotAvailability(null);
+                    }
                  }
 
             } else if (viewName === 'master') {
@@ -1141,6 +1171,7 @@
                 return (
                     data.code.toLowerCase().includes(query) ||
                     data.name.toLowerCase().includes(query) ||
+                    (data.color && data.color.toLowerCase().includes(query)) ||
                     data.machine.toLowerCase().includes(query) ||
                     (data.machine_optional && data.machine_optional.toLowerCase().includes(query))
                 );
@@ -1161,20 +1192,22 @@
                 return;
             }
 
-            const actionHeader = isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : '';
+            // Samakan padding header aksi dengan tabel sebelah
+            const actionHeader = isLoggedIn ? '<th class="py-2 px-3 border-b text-center">Aksi</th>' : '';
 
             let tableHTML = `
-                <table class="min-w-full bg-white border border-gray-200">
+                <table class="min-w-full bg-white border border-gray-200 text-sm">
                     <thead class="sticky top-0 bg-gray-100 z-10">
                         <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                            <th class="py-3 px-4 border-b w-12 text-center">#</th>
-                            <th class="py-3 px-4 border-b">Kode Barang</th>
-                            <th class="py-3 px-4 border-b">Nama Komponen / Produk</th>
-                            <th class="py-3 px-4 border-b">Mesin Utama</th>
-                            <th class="py-3 px-4 border-b">Mesin (Optional)</th>
-                            <th class="py-3 px-4 border-b text-right">Isi Dus (pcs)</th>
-                            <th class="py-3 px-4 border-b text-right">Target 1 Shift (pcs)</th>
-                            <th class="py-3 px-4 border-b text-right font-bold text-red-600">Kapasitas 3 Shift (pcs)</th>
+                            <th class="py-2 px-3 border-b w-10 text-center">#</th>
+                            <th class="py-2 px-3 border-b">Kode Barang</th>
+                            <th class="py-2 px-3 border-b">Nama Komponen / Produk</th>
+                            <th class="py-2 px-3 border-b">Warna</th>
+                            <th class="py-2 px-3 border-b">Mesin Utama</th>
+                            <th class="py-2 px-3 border-b">Mesin (Optional)</th>
+                            <th class="py-2 px-3 border-b text-right">Isi Dus (pcs)</th>
+                            <th class="py-2 px-3 border-b text-right">Target 1 Shift (pcs)</th>
+                            <th class="py-2 px-3 border-b text-right font-bold text-red-600">Kapasitas 3 Shift (pcs)</th>
                             ${actionHeader}
                         </tr>
                     </thead>
@@ -1186,36 +1219,43 @@
                 const capacity3ShiftPcs = data.targetPerShift * SHIFTS_PER_DAY;
 
                 const actionButtons = isLoggedIn ? `
-                    <td class="py-3 px-4 text-center whitespace-nowrap space-x-2 ${rowClass}">
+                    <td class="py-1 px-2 text-center whitespace-nowrap space-x-1 ${rowClass}">
                         <button onclick="startEditData('${data.id}')"
-                                class="text-indigo-500 hover:text-indigo-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50 transform hover:scale-105"
+                                class="text-indigo-500 hover:text-indigo-700 p-1 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50 transform hover:scale-105"
                                 title="Edit Data">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
                             </svg>
                         </button>
 
                         <button onclick="prepareDelete('${data.id}')"
-                                class="text-red-500 hover:text-red-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-red-50 transform hover:scale-105"
+                                class="text-red-500 hover:text-red-700 p-1 rounded-full transition duration-150 ease-in-out hover:bg-red-50 transform hover:scale-105"
                                 title="Hapus Data">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </td>
                 ` : '';
 
+                // Perubahan Tipografi agar konsisten dengan Tabel Jadwal:
+                // 1. Kode Barang: font-mono font-bold text-gray-700 (UPDATED: font-medium -> font-bold)
+                // 2. Mesin Utama: font-bold text-gray-800
+                // 3. Warna: text-gray-600
+                // 4. Mesin Optional: text-xs (lebih kecil agar rapi)
+                
                 tableHTML += `
                     <tr class="border-b hover:bg-gray-100 ${rowClass}">
-                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
-                        <td class="py-3 px-4 text-gray-800 font-mono whitespace-nowrap">${data.code}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.name}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine}</td>
-                        <td class="py-3 px-4 text-gray-700 whitespace-nowrap">${data.machine_optional || 'N/A'}</td>
-                        <td class="py-3 px-4 text-right">${data.pcs_per_box.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
-                        <td class="py-3 px-4 text-right">${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
-                        <td class="py-3 px-4 text-right font-bold text-red-700">${capacity3ShiftPcs.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        <td class="py-2 px-3 text-center text-gray-500 ${rowClass}">${index + 1}</td>
+                        <td class="py-2 px-3 text-gray-700 font-mono font-bold whitespace-nowrap">${data.code}</td>
+                        <td class="py-2 px-3 text-gray-700 whitespace-nowrap">${data.name}</td>
+                        <td class="py-2 px-3 text-gray-600 whitespace-nowrap">${data.color || '-'}</td>
+                        <td class="py-2 px-3 text-gray-800 font-bold whitespace-nowrap">${data.machine}</td>
+                        <td class="py-2 px-3 text-gray-600 text-xs whitespace-nowrap">${data.machine_optional || 'N/A'}</td>
+                        <td class="py-2 px-3 text-right">${data.pcs_per_box.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        <td class="py-2 px-3 text-right">${data.targetPerShift.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
+                        <td class="py-2 px-3 text-right font-bold text-red-700">${capacity3ShiftPcs.toLocaleString('id-ID', { maximumFractionDigits: 0 })}</td>
                         ${actionButtons}
                     </tr>
                 `;
@@ -1269,7 +1309,7 @@
             const placeholderDefault = '<option value="" disabled selected>Pilih Mesin</option>';
 
             selects.forEach(select => {
-                if (!select) return;
+                if (!select) return; // UPDATE: Skip jika elemen tidak ditemukan (misal sudah dihapus)
                 
                 select.innerHTML = (groupedMachines.length === 0) ? placeholderEmpty : placeholderDefault;
                 if (groupedMachines.length === 0) return;
@@ -1291,6 +1331,9 @@
             }
             
             const machineDropdown = document.getElementById('inputScheduleMachine');
+            // UPDATE: Cek jika elemen input tidak ada
+            if (!machineDropdown) return;
+
             const dateStr = document.getElementById('inputScheduleDate').value;
             const shift = document.getElementById('inputScheduleShift').value;
             const code = document.getElementById('inputScheduleCode').value.trim();
@@ -1845,12 +1888,16 @@
         }
 
         window.cancelScheduleEdit = function() {
+            // UPDATE: Tambahkan pengecekan keamanan (if inputs exist)
+            const codeInput = document.getElementById('inputScheduleCode');
+            if (!codeInput) return; 
+
             document.getElementById('inputScheduleCode').value = '';
             document.getElementById('inputScheduleDate').value = ''; 
             document.getElementById('inputScheduleQty').value = '';
             
             const nameDropdown = document.getElementById('inputScheduleName');
-            nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
+            if (nameDropdown) nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
             
             document.getElementById('inputScheduleMachine').value = ''; 
             document.getElementById('inputScheduleShift').value = 'Shift 1';
@@ -1860,6 +1907,9 @@
 
         window.findProductNameByCode = function() {
             const codeInput = document.getElementById('inputScheduleCode');
+            // UPDATE: Safety Check
+            if (!codeInput) return;
+
             const nameDropdown = document.getElementById('inputScheduleName'); 
             const machineDropdown = document.getElementById('inputScheduleMachine');
             const code = codeInput.value.trim().toUpperCase();
@@ -1901,7 +1951,11 @@
         }
 
         window.handleComponentSelectionChange = function() {
-            const code = document.getElementById('inputScheduleCode').value.trim().toUpperCase();
+            const codeInput = document.getElementById('inputScheduleCode');
+            // UPDATE: Safety Check
+            if (!codeInput) return;
+
+            const code = codeInput.value.trim().toUpperCase();
             const componentName = document.getElementById('inputScheduleName').value;
             const machineDropdown = document.getElementById('inputScheduleMachine');
 
@@ -1934,6 +1988,9 @@
             }
 
             const machineDropdown = document.getElementById('inputScheduleMachine');
+            // UPDATE: Safety Check
+            if (!machineDropdown) return;
+
             const dateStr = document.getElementById('inputScheduleDate').value;
             const shift = document.getElementById('inputScheduleShift').value;
             const codeInput = document.getElementById('inputScheduleCode');
@@ -2925,6 +2982,7 @@
                             <thead>
                                 <tr class="bg-gray-100 text-left text-gray-600 uppercase tracking-wider">
                                     <th class="py-2 px-3 border-b">Komponen/Mesin</th>
+                                    <th class="py-2 px-3 border-b text-center">Warna</th>
                                     <th class="py-2 px-3 border-b text-right">Isi Dus</th>
                                     <th class="py-2 px-3 border-b text-right">Total Pcs</th>
                                     <th class="py-2 px-3 border-b text-right">Target Shift</th>
@@ -2951,6 +3009,7 @@
                     estimationMachineTracker[machine] = lastBusyShiftNet + shiftNet;
                     
                     const formattedHoursMinutes = formatHoursMinutes(hoursNet);
+                    const colorDisplay = product.color || '-';
 
                     pendingScheduleComponents.push({
                         productCode: product.code,
@@ -2965,6 +3024,7 @@
                     combinedDetailsHTML += `
                         <tr class="border-b hover:bg-gray-100 ${rowClass}">
                             <td class="py-2 px-3 text-gray-700"><strong>${product.name}</strong> (${product.machine})</td>
+                            <td class="py-2 px-3 text-center text-gray-600 font-medium">${colorDisplay}</td>
                             <td class="py-2 px-3 text-right">${integerFormatter.format(pcsPerBox)}</td>
                             <td class="py-2 px-3 text-right font-bold">${integerFormatter.format(totalPcsOrdered)}</td>
                             <td class="py-2 px-3 text-right">${integerFormatter.format(targetPerShiftPcs)}</td>
@@ -3216,6 +3276,7 @@
                         pcs_per_box: cleanInt(item.pcs_per_box),
                         targetPerShift: cleanInt(item.targetPerShift),
                         machine_optional: item.machine_optional || null, 
+                        color: item.color || null,
                     };
                 });
             }
@@ -3236,6 +3297,7 @@
             const currentId = document.getElementById('inputId').value;
             const code = document.getElementById('inputCode').value.trim();
             const name = document.getElementById('inputName').value.trim() || 'Tidak Diketahui';
+            const color = document.getElementById('inputColor').value.trim() || null;
             const machine = document.getElementById('inputMachine').value.trim() || 'Tidak Diketahui';
             const machineOptional = document.getElementById('inputMachineOptional').value.trim() || null; 
 
@@ -3252,6 +3314,7 @@
             const dataToSave = {
                 code: code,
                 name: name,
+                color: color,
                 machine: machine,
                 machine_optional: machineOptional, 
                 pcs_per_box: pcsPerBox,
@@ -3349,6 +3412,7 @@
             document.getElementById('inputId').value = id;
             document.getElementById('inputCode').value = data.code;
             document.getElementById('inputName').value = data.name;
+            document.getElementById('inputColor').value = data.color || '';
             document.getElementById('inputMachine').value = data.machine;
             document.getElementById('inputMachineOptional').value = data.machine_optional || ''; 
 
@@ -3672,11 +3736,18 @@
                     shiftQueryMatch = data.schedule_shift && data.schedule_shift.split(' ')[1] === query;
                 }
 
+                // Cari juga berdasarkan warna (lookup dinamis)
+                let colorMatch = false;
+                const matchingProduct = Object.values(productionData).find(p => p.code === data.product_code);
+                const color = matchingProduct ? (matchingProduct.color || '') : '';
+                if (color.toLowerCase().includes(query)) colorMatch = true;
+
                 return (
                     (data.mesin && data.mesin.toLowerCase().includes(query)) ||
                     (data.product_code && data.product_code.toLowerCase().includes(query)) ||
                     (data.product_name && data.product_name.toLowerCase().includes(query)) ||
-                    shiftQueryMatch 
+                    shiftQueryMatch ||
+                    colorMatch
                 );
             });
 
@@ -3710,22 +3781,24 @@
                 }
             }
 
+            // Perubahan: Menambahkan Header 'Warna' setelah 'Nama Komponen'
             tableHTML += `
                 <div class="overflow-x-auto rounded-lg shadow-md max-h-[60vh] overflow-y-auto">
-                    <table class="min-w-full bg-white border border-gray-200">
+                    <table class="min-w-full bg-white border border-gray-200 text-sm">
                         <thead class="sticky top-0 bg-gray-100 z-10">
                             <tr class="text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                ${isLoggedIn ? `<th class="py-3 px-4 border-b w-12 text-center">
+                                ${isLoggedIn ? `<th class="py-2 px-3 border-b w-12 text-center">
                                     <input type="checkbox" id="selectAllSchedulesCheckbox" onclick="toggleSelectAllSchedules(this)" class="rounded border-gray-400 focus:ring-indigo-500">
                                 </th>` : ''}
-                                <th class="py-3 px-4 border-b w-12 text-center">#</th>
-                                <th class="py-3 px-4 border-b">Mesin Utama</th>
-                                <th class="py-3 px-4 border-b">Kode Produk</th>
-                                <th class="py-3 px-4 border-b">Nama Komponen</th>
-                                <th class="py-3 px-4 border-b text-center">Jml Pesanan (Dus)</th>
-                                <th class="py-3 px-4 border-b text-center">Shift</th>
-                                <th class="py-3 px-4 border-b text-center">Tanggal Jadwal</th>
-                                ${isLoggedIn ? '<th class="py-3 px-4 border-b text-center">Aksi</th>' : ''}
+                                <th class="py-2 px-3 border-b w-12 text-center">#</th>
+                                <th class="py-2 px-3 border-b text-center">Tanggal Jadwal</th>
+                                <th class="py-2 px-3 border-b">Mesin Utama</th>
+                                <th class="py-2 px-3 border-b">Kode Produk</th>
+                                <th class="py-2 px-3 border-b">Nama Komponen</th>
+                                <th class="py-2 px-3 border-b">Warna</th> 
+                                <th class="py-2 px-3 border-b text-center">Jml Pesanan (Dus)</th>
+                                <th class="py-2 px-3 border-b text-center">Shift</th>
+                                ${isLoggedIn ? '<th class="py-2 px-3 border-b text-center">Aksi</th>' : ''}
                             </tr>
                         </thead>
                         <tbody>
@@ -3734,7 +3807,6 @@
             const visibleIds = getVisibleScheduleIds(); 
             const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selectedScheduleIds.has(id));
             
-            // Variabel untuk melacak kode produk baris sebelumnya (untuk grouping)
             let lastSeenCode = null;
 
             filteredData.forEach((data, index) => {
@@ -3745,34 +3817,33 @@
 
                 const productName = data.product_name || 'Nama?';
                 
-                // --- UNDO LOGIKA HITUNG JUMLAH (DUS) ---
-                // Kembali ke logika awal: Hanya tampilkan data asli database atau '-'
+                // Lookup Warna dari Data Master Produksi
+                const matchingProduct = Object.values(productionData).find(p => p.code === data.product_code);
+                const colorDisplay = matchingProduct ? (matchingProduct.color || '-') : '-';
+                
                 let finalQty = data.order_qty;
                 if (!finalQty || finalQty == 0) {
                     finalQty = '-';
                 }
 
-                // --- LOGIKA TAMPILAN GROUPING ---
                 const isSameGroup = (lastSeenCode === data.product_code);
                 
                 let orderQtyDisplay = '';
                 if (!isSameGroup) {
-                    // Tampilan Angka (Hanya jika ada data asli)
                     if (finalQty !== '-') {
-                        orderQtyDisplay = `<span class="font-bold text-indigo-700 bg-indigo-50 px-2 py-1 rounded border border-indigo-100">${finalQty}</span>`;
+                        orderQtyDisplay = `<span class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 text-xs">${finalQty}</span>`;
                     } else {
                         orderQtyDisplay = `<span class="text-gray-400 font-medium">-</span>`;
                     }
                     lastSeenCode = data.product_code; 
                 } else {
-                    // Jika sama dengan atasnya
                     orderQtyDisplay = `<span class="text-gray-300 text-lg">"</span>`; 
                 }
-                // ----------------------------------
 
                 const isChecked = selectedScheduleIds.has(data.id); 
+                
                 const checkboxCell = isLoggedIn ? `
-                    <td class="py-3 px-4 text-center ${rowClass}">
+                    <td class="py-2 px-3 text-center align-middle ${rowClass}">
                         <input type="checkbox" 
                                class="rounded border-gray-400 schedule-checkbox focus:ring-indigo-500" 
                                value="${data.id}" 
@@ -3782,37 +3853,44 @@
                 ` : '';
 
                 const actionButtons = isLoggedIn ? `
-                    <td class="py-3 px-4 text-center whitespace-nowrap ${rowClass}">
+                    <td class="py-1 px-2 text-center whitespace-nowrap align-middle ${rowClass}">
                         <button onclick='startScheduleEdit(${JSON.stringify(data)})'
-                                class="text-indigo-500 hover:text-indigo-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50"
+                                class="text-indigo-500 hover:text-indigo-700 p-1 rounded-full transition duration-150 ease-in-out hover:bg-indigo-50"
                                 title="Edit Jadwal">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
                                 <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" />
                             </svg>
                         </button>
                         <button onclick="prepareScheduleDelete('${data.id}', '${data.product_code}', '${displayDate}', '${data.schedule_shift}')"
-                                class="text-red-500 hover:text-red-700 p-2 rounded-full transition duration-150 ease-in-out hover:bg-red-50"
+                                class="text-red-500 hover:text-red-700 p-1 rounded-full transition duration-150 ease-in-out hover:bg-red-50"
                                 title="Hapus Jadwal">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
                             </svg>
                         </button>
                     </td>
                 ` : '';
 
+                // UPDATE PERBAIKAN: Menambahkan 'truncate', 'max-w-[...]' dan 'title' tooltip
+                // Ini akan memaksa semua baris memiliki tinggi yang sama (single line)
                 tableHTML += `
                     <tr class="border-b hover:bg-gray-100 ${rowClass}">
                         ${checkboxCell} 
-                        <td class="py-3 px-4 text-center text-gray-500 ${rowClass}">${index + 1}</td>
-                        <td class="py-3 px-4 text-gray-800 font-bold">${data.mesin}</td>
-                        <td class="py-3 px-4 text-gray-700 font-mono">
+                        <td class="py-2 px-3 text-center text-gray-500 align-middle whitespace-nowrap ${rowClass}">${index + 1}</td>
+                        <td class="py-2 px-3 text-gray-700 text-center align-middle whitespace-nowrap">${displayDate}</td>
+                        <td class="py-2 px-3 text-gray-800 font-bold align-middle whitespace-nowrap">${data.mesin}</td>
+                        <td class="py-2 px-3 text-gray-700 font-mono font-bold align-middle whitespace-nowrap">
                             ${data.product_code}
                         </td>
-                        <td class="py-3 px-4 text-gray-700 text-sm">${productName}</td>
-                        <td class="py-3 px-4 text-center align-middle">${orderQtyDisplay}</td>
-                        <td class="py-3 px-4 text-gray-700 text-center">${data.schedule_shift.split(' ')[1]}</td>
-                        <td class="py-3 px-4 text-gray-700 text-center">${displayDate}</td>
+                        <td class="py-2 px-3 text-gray-700 align-middle whitespace-nowrap max-w-[180px] truncate" title="${productName}">
+                            ${productName}
+                        </td>
+                        <td class="py-2 px-3 text-gray-600 text-sm align-middle whitespace-nowrap max-w-[180px] truncate" title="${colorDisplay}">
+                            ${colorDisplay}
+                        </td> 
+                        <td class="py-2 px-3 text-center align-middle whitespace-nowrap">${orderQtyDisplay}</td>
+                        <td class="py-2 px-3 text-gray-700 text-center align-middle whitespace-nowrap">${data.schedule_shift.split(' ')[1]}</td>
                         ${actionButtons}
                     </tr>
                 `;
@@ -3869,6 +3947,8 @@
              return masterScheduleData.filter(data => {
                 if (!searchQuery) return true;
                 const query = searchQuery.toLowerCase();
+                // Update filter to include color logic in helper as well if needed, or simple check
+                // For selection logic, reuse the main filter logic roughly or keep simple
                 return (
                     (data.mesin && data.mesin.toLowerCase().includes(query)) ||
                     (data.product_code && data.product_code.toLowerCase().includes(query)) ||
@@ -4276,11 +4356,16 @@
                 const dateParts = data.schedule_date.split('-');
                 const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
                 
+                // Lookup Warna untuk Excel
+                const matchingProduct = Object.values(productionData).find(p => p.code === data.product_code);
+                const colorDisplay = matchingProduct ? (matchingProduct.color || '-') : '-';
+
                 return {
                     "MESIN UTAMA": data.mesin,
                     "KODE PRODUK": data.product_code,
                     "NAMA KOMPONEN": data.product_name || 'N/A',
-                    "JML PESANAN (DUS)": data.order_qty || '-', // EXPORT QTY
+                    "WARNA": colorDisplay, // Tambahkan ke Export
+                    "JML PESANAN (DUS)": data.order_qty || '-', 
                     "SHIFT": data.schedule_shift.split(' ')[1], 
                     "TANGGAL JADWAL": displayDate
                 };
@@ -4295,6 +4380,7 @@
                     { wch: 15 }, 
                     { wch: 15 }, 
                     { wch: 30 }, 
+                    { wch: 20 }, // Lebar Kolom Warna
                     { wch: 15 }, // QTY COL WIDTH
                     { wch: 10 }, 
                     { wch: 18 }  
@@ -4353,6 +4439,7 @@
                     "NO": index + 1,
                     "KODE BARANG": data.code,
                     "NAMA KOMPONEN / PRODUK": data.name,
+                    "WARNA": data.color || '-',
                     "MESIN UTAMA": data.machine,
                     "MESIN (OPTIONAL)": data.machine_optional || '-',
                     "ISI DUS (PCS)": data.pcs_per_box,
@@ -4372,6 +4459,7 @@
                     { wch: 5 },  // No
                     { wch: 15 }, // Kode
                     { wch: 35 }, // Nama
+                    { wch: 15 }, // Warna
                     { wch: 15 }, // Mesin Utama
                     { wch: 20 }, // Mesin Optional
                     { wch: 12 }, // Isi Dus
