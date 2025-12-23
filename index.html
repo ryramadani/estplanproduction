@@ -93,19 +93,7 @@
             background-color: transparent;
         }
 
-        /* Style untuk form input jadwal admin */
-        #scheduleInputForm {
-            transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
-            max-height: 0;
-            overflow: hidden;
-            opacity: 0;
-        }
 
-        #scheduleInputForm.visible {
-            max-height: 600px;
-            /* Diperbesar sedikit untuk menampung input baru */
-            opacity: 1;
-        }
 
         /* CSS untuk memperbesar font PDF */
         .pdf-export-font .text-xs {
@@ -1197,12 +1185,55 @@
     </div>
 
     <script>
+
+
+        window.addInputRow = function () {
+            const container = document.getElementById('inputRowsContainer');
+            if (!container) return;
+            const rowId = 'input-row-' + Date.now();
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+            tr.className = 'product-input-row hover:bg-gray-50 transition duration-150';
+            const isFirstRow = container.children.length === 0;
+            const deleteVisibility = isFirstRow ? 'invisible' : '';
+
+            tr.innerHTML = `
+                <td class="py-2 px-4">
+                    <input type="text" class="product-code-input w-full p-2 border border-gray-300 rounded-lg text-sm uppercase-input" placeholder="Kode Barang..." list="productCodeList" oninput="this.value = this.value.toUpperCase()">
+                </td>
+                <td class="py-2 px-4">
+                    <input type="number" class="order-qty-input w-full p-2 border border-gray-300 rounded-lg text-sm" placeholder="0" min="1">
+                </td>
+                <td class="py-2 px-4">
+                    <select class="start-shift-input w-full p-2 bg-white border border-gray-200 text-sm rounded-lg">
+                        <option value="auto">✨ Otomatis</option>
+                        <option value="Shift 1">🌞 Shift 1</option>
+                        <option value="Shift 2">🌤️ Shift 2</option>
+                        <option value="Shift 3">🌙 Shift 3</option>
+                    </select>
+                </td>
+                <td class="py-2 px-4 text-center">
+                    <button onclick="window.removeInputRow('${rowId}')" class="text-gray-400 hover:text-red-500 p-2 ${deleteVisibility}">
+                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </td>
+            `;
+            container.appendChild(tr);
+        };
+
+        window.removeInputRow = function (rowId) {
+            const row = document.getElementById(rowId);
+            if (row) row.remove();
+        };
+
+
+
         const SUPABASE_URL = 'https://adxpkzebtvetcnhngjax.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkeHBremVidHZldGNuaG5namF4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA5NDEzMTEsImV4cCI6MjA3NjUxNzMxMX0.c8pMAL7jAJFJmKFh8hcjI8_pIiW_pHZrenHT8nbUdoA';
         const TABLE_NAME = 'production_rates';
         const SCHEDULE_TABLE_NAME = 'production_schedule';
 
-        let supabase;
+        // let supabase;
         let productionData = {};
         let scheduleData = {};
         let masterScheduleData = [];
@@ -1271,10 +1302,7 @@
 
         let pendingScheduleComponents = [];
 
-        // SHIM: Global definition to prevent ReferenceError
-        window.cancelScheduleEdit = function () {
-            // No-op: Legacy form removed
-        };
+
 
         const cleanInt = (str) => {
             if (typeof str === 'number') return str;
@@ -1429,35 +1457,10 @@
             }
         }
 
-        function getNextWorkday(date) {
-            let currentDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-            while (currentDate.getDay() === 0 || currentDate.getDay() === 6) {
-                currentDate.setDate(currentDate.getDate() + 1);
-            }
-            return currentDate;
-        }
 
-        function formatDateToYMD(date) {
-            if (!(date instanceof Date) || isNaN(date)) return '';
-            const y = date.getFullYear();
-            const m = (date.getMonth() + 1).toString().padStart(2, '0');
-            const d = date.getDate().toString().padStart(2, '0');
-            return `${y}-${m}-${d}`;
-        }
 
         // --- Helper Functions for UI State ---
-        function updateDeleteSelectedButtonState() {
-            const container = document.getElementById('deleteSelectedScheduleContainer');
-            const countSpan = document.getElementById('selectedScheduleCount');
 
-            if (isLoggedIn && selectedScheduleIds.size > 0) {
-                container.classList.remove('hidden');
-                countSpan.textContent = selectedScheduleIds.size;
-            } else {
-                container.classList.add('hidden');
-                countSpan.textContent = 0;
-            }
-        }
 
         function updateDeleteButtonsVisibility() {
             const container = document.getElementById('inputRowsContainer');
@@ -1504,7 +1507,7 @@
                 scheduleInputForm.classList.add('hidden');
             }
 
-            cancelScheduleEdit();
+
 
             if (viewName === 'estimation') {
                 description.textContent = 'Hitung estimasi waktu dan kapasitas produksi Anda secara akurat dan efisien di sini.';
@@ -1590,6 +1593,40 @@
             targetInput.addEventListener('input', updateCapacity);
             pcsPerBoxInput.addEventListener('input', () => { });
         }
+
+        // --- NEW: MISSING CORE DATA FETCHERS ---
+
+
+
+
+        function processScheduleData(data) {
+            // Global data processing for schedule items
+            if (data) {
+                data.forEach(item => {
+                    const key = `${item.mesin}|${item.schedule_date}|${item.schedule_shift}`;
+                    scheduleData[key] = item;
+                });
+            }
+        }
+
+        // SHIM to prevent ReferenceError in showView and other places
+        window.checkSlotAvailability = function (product = null) {
+            // Forwarding to specialized versions if available
+            if (document.getElementById('scheduleAddModal')?.classList.contains('hidden') === false) {
+                if (typeof checkSlotAvailability_AddModal === 'function') checkSlotAvailability_AddModal(product);
+            } else if (document.getElementById('scheduleEditModal')?.classList.contains('hidden') === false) {
+                if (typeof checkSlotAvailability_Modal === 'function') checkSlotAvailability_Modal(product);
+            }
+        };
+
+        // GLOBAL ERROR HANDLER TO CAPTURE "NOT CLICKABLE" ISSUES
+        window.onerror = function (message, source, lineno, colno, error) {
+            console.error("GLOBAL JS ERROR DETECTED:", message, "at", source, ":", lineno);
+            if (window.showMessage) {
+                showMessage(`System Error: ${message} (Line ${lineno})`, "error");
+            }
+            return false;
+        };
 
         function populateProductDatalist() {
             const datalist = document.getElementById('productCodeList');
@@ -1755,7 +1792,6 @@
 
         function populateMachineDropdowns() {
             const selects = [
-                document.getElementById('inputScheduleMachine'),
                 document.getElementById('modalScheduleMachine'),
                 document.getElementById('addScheduleMachine')
             ];
@@ -1880,319 +1916,7 @@
             }
         }
 
-        // --- NEW: Toggle & Logic for Add Schedule Modal ---
-        window.toggleScheduleAddModal = function (show) {
-            const modal = document.getElementById('scheduleAddModal');
-            if (modal) modal.classList.toggle('hidden', !show);
-        }
 
-        window.openAddScheduleModal = function (machineName, dateStr, shift) {
-            const dateParts = dateStr.split('-');
-            const displayDate = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}`;
-
-            document.getElementById('addScheduleMachine').value = machineName;
-            document.getElementById('addScheduleDate').value = displayDate;
-            document.getElementById('addScheduleShift').value = shift;
-
-            // Reset fields
-            document.getElementById('addScheduleCode').value = '';
-            document.getElementById('addScheduleQty').value = '';
-            document.getElementById('addScheduleName').innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
-            document.getElementById('addSlotStatusMessage').textContent = '';
-
-            toggleScheduleAddModal(true);
-            checkSlotAvailability_AddModal();
-        }
-
-        window.findProductNameByCode_AddModal = function () {
-            const codeInput = document.getElementById('addScheduleCode');
-            const nameDropdown = document.getElementById('addScheduleName');
-            const code = codeInput.value.trim().toUpperCase();
-
-            nameDropdown.innerHTML = '';
-
-            if (!code) {
-                nameDropdown.innerHTML = '<option value="" disabled selected>Otomatis (Isi Kode)</option>';
-                checkSlotAvailability_AddModal(null);
-                return;
-            }
-
-            const matchingProducts = Object.values(productionData).filter(p => p.code === code);
-
-            if (matchingProducts.length > 0) {
-                if (matchingProducts.length > 1) {
-                    nameDropdown.innerHTML = '<option value="" disabled selected>Pilih Komponen...</option>';
-                }
-
-                matchingProducts.forEach(product => {
-                    const option = document.createElement('option');
-                    option.value = product.name;
-                    option.textContent = product.name;
-                    nameDropdown.appendChild(option);
-                });
-
-                if (matchingProducts.length === 1) {
-                    nameDropdown.value = matchingProducts[0].name;
-                    handleComponentSelectionChange_AddModal();
-                }
-            } else {
-                nameDropdown.innerHTML = '<option value="" disabled>Kode tidak ditemukan</option>';
-                checkSlotAvailability_AddModal(null);
-            }
-        }
-
-        window.handleComponentSelectionChange_AddModal = function () {
-            const code = document.getElementById('addScheduleCode').value.trim().toUpperCase();
-            const componentName = document.getElementById('addScheduleName').value;
-
-            if (!code || !componentName) {
-                checkSlotAvailability_AddModal(null);
-                return;
-            }
-
-            const product = Object.values(productionData).find(p => p.code === code && p.name === componentName);
-            checkSlotAvailability_AddModal(product);
-        }
-
-        window.checkSlotAvailability_AddModal = async function (productData = null) {
-            const messageEl = document.getElementById('addSlotStatusMessage');
-            if (!messageEl) return;
-
-            const machineDropdown = document.getElementById('addScheduleMachine');
-            const dateStr = document.getElementById('addScheduleDate').value;
-            const shift = document.getElementById('addScheduleShift').value;
-            const codeInput = document.getElementById('addScheduleCode');
-            const code = codeInput.value.trim().toUpperCase();
-
-            if (!isLoggedIn || !code || !dateStr || !shift) {
-                messageEl.textContent = ''; return;
-            }
-
-            const parsedDate = parseDMY(dateStr);
-            if (!parsedDate) {
-                messageEl.textContent = 'Format Tanggal Salah';
-                messageEl.className = 'text-sm font-bold mt-3 text-center text-red-600';
-                return;
-            }
-            const dbDate = formatDateToYMD(parsedDate);
-
-            if (!productData) {
-                const componentName = document.getElementById('addScheduleName').value;
-                if (componentName) {
-                    productData = Object.values(productionData).find(p => p.code === code && p.name === componentName);
-                } else {
-                    productData = Object.values(productionData).find(p => p.code === code);
-                }
-            }
-
-            if (!productData) {
-                messageEl.textContent = '';
-                return;
-            }
-
-            // Check if selected machine is valid for this product
-            const machinesToCheck = [];
-            if (productData.machine) machinesToCheck.push(productData.machine);
-            if (productData.machine_optional) {
-                productData.machine_optional.split(',').map(m => m.trim().toUpperCase()).filter(m => m && !machinesToCheck.includes(m)).forEach(m => machinesToCheck.push(m));
-            }
-
-            const selectedMachine = machineDropdown.value;
-            let statusMessage = '';
-            let messageColor = '';
-
-            if (!machinesToCheck.includes(selectedMachine)) {
-                statusMessage = `Peringatan: Produk ini biasanya diproses di ${machinesToCheck.join(', ')} `;
-                messageColor = 'text-orange-600';
-            } else {
-                statusMessage = 'Produk kompatibel dengan mesin ini.';
-                messageColor = 'text-green-600';
-            }
-
-            // Final check: Is slot empty?
-            const key = `${selectedMachine}| ${dbDate}| ${shift} `;
-            const scheduleItem = scheduleData[key];
-
-            if (scheduleItem) {
-                statusMessage = "SLOT SUDAH TERISI!";
-                messageColor = 'text-red-600';
-            }
-
-            messageEl.textContent = statusMessage;
-            messageEl.className = `text-sm font-bold mt-3 text-center ${messageColor}`;
-        }
-
-        window.saveScheduleSlotFromModal = async function (forceWeekend = false) {
-            if (!isLoggedIn) {
-                showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
-                return;
-            }
-
-            const machine = document.getElementById('addScheduleMachine').value;
-            const dateStr = document.getElementById('addScheduleDate').value;
-            const shift = document.getElementById('addScheduleShift').value;
-            const code = document.getElementById('addScheduleCode').value.trim();
-            const name = document.getElementById('addScheduleName').value;
-            const qty = document.getElementById('addScheduleQty').value;
-
-            if (!machine || !dateStr || !shift || !code) {
-                showMessage("Data tidak lengkap.", "error");
-                return;
-            }
-
-            const parsedDate = parseDMY(dateStr);
-            if (!parsedDate) {
-                showMessage("Format Tanggal tidak valid.", "error");
-                return;
-            }
-
-            const isWeekend = (parsedDate.getDay() === 0 || parsedDate.getDay() === 6);
-            if (isWeekend && !forceWeekend) {
-                toggleWeekendConfirmModal(true, 'add_modal', dateStr);
-                return;
-            }
-
-            const dbDate = formatDateToYMD(parsedDate);
-            const key = `${machine}| ${dbDate}| ${shift} `;
-
-            if (scheduleData[key]) {
-                showMessage("Gagal: Slot sudah terisi.", "error");
-                return;
-            }
-
-            const dataToSave = {
-                mesin: machine,
-                schedule_date: dbDate,
-                schedule_shift: shift,
-                product_code: code,
-                product_name: name,
-                order_qty: qty,
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                const { error } = await supabase
-                    .from(SCHEDULE_TABLE_NAME)
-                    .insert([dataToSave])
-                    .select();
-
-                if (error) throw error;
-
-                showMessage(`Jadwal baru berhasil ditambahkan!`, "info");
-                toggleScheduleAddModal(false);
-
-                const start = document.getElementById('startDate').value;
-                const end = document.getElementById('endDate').value;
-
-                await fetchAllScheduleData();
-                renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
-                if (start && end) {
-                    renderPlanningTable(start, end);
-                }
-
-            } catch (e) {
-                console.error("Error saving new schedule slot:", e);
-                showMessage(`Gagal menyimpan: ${e.message} `, "error");
-            }
-        }
-
-        window.toggleWeekendConfirmModal = function (show, action = null, dateStr = '', details = null) {
-            const modal = document.getElementById('weekendConfirmModal');
-            if (!modal) return;
-
-            modal.classList.toggle('hidden', !show);
-
-            if (show) {
-                const titleEl = document.getElementById('weekendModalTitle');
-                const textEl = document.getElementById('weekendConfirmText');
-
-                if (action === 'swap') {
-                    const sCode = details ? details.source : 'Item A';
-                    const tCode = details ? details.target : 'Item B';
-                    const isRisk = details && details.isRisk;
-
-                    // Ikon Panah SVG (Pengganti FontAwesome)
-                    const swapIcon = `
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                        </svg>
-            `;
-
-                    if (isRisk) {
-                        if (titleEl) titleEl.textContent = "Konfirmasi Swap (Hari Libur)";
-                        if (textEl) {
-                            textEl.innerHTML = `
-                                <p class="mb-3">Penukaran jadwal ini melibatkan <strong>Hari Libur (Akhir Pekan)</strong>.</p>
-                                <div class="flex items-center justify-center bg-orange-50 border border-orange-100 p-3 rounded-lg mb-3">
-                                    <span class="font-bold text-indigo-700">${sCode}</span>
-                                    ${swapIcon}
-                                    <span class="font-bold text-indigo-700">${tCode}</span>
-                                </div>
-                                <p>Apakah Anda yakin ingin melanjutkan penukaran?</p>
-        `;
-                        }
-                    } else {
-                        if (titleEl) titleEl.textContent = "Konfirmasi Tukar Posisi";
-                        if (textEl) {
-                            textEl.innerHTML = `
-                                <p class="mb-3">Anda akan menukar posisi jadwal:</p>
-                                <div class="flex items-center justify-center bg-gray-50 border border-gray-200 p-3 rounded-lg mb-3">
-                                    <span class="font-bold text-indigo-700 text-lg">${sCode}</span>
-                                    ${swapIcon}
-                                    <span class="font-bold text-indigo-700 text-lg">${tCode}</span>
-                                </div>
-                                <p>Pastikan kedua mesin kompatibel. Lanjutkan?</p>
-        `;
-                        }
-                    }
-                } else {
-                    // Default / Standard Weekend logic
-                    if (titleEl) titleEl.textContent = "Konfirmasi Hari Libur";
-                    if (textEl) {
-                        textEl.innerHTML = `
-                        <p>Tanggal <span class="font-bold text-orange-600 bg-orange-50 px-1 rounded">${dateStr}</span> adalah hari libur (Akhir Pekan).</p>
-                        <p class="mt-2">Apakah Anda yakin ingin menjadwalkan produksi di hari ini?</p>
-        `;
-                    }
-                }
-            }
-
-            if (action) {
-                pendingWeekendAction = action;
-            }
-        }
-
-        window.handleWeekendConfirm = function () {
-            toggleWeekendConfirmModal(false);
-
-            if (pendingWeekendAction === 'save') {
-                saveScheduleSlot(true);
-            } else if (pendingWeekendAction === 'update') {
-                updateScheduleSlotFromModal(true);
-            } else if (pendingWeekendAction === 'move') {
-                processDropUpdate(true);
-            } else if (pendingWeekendAction === 'swap') {
-                executeSwap(); // New Swap Action
-            } else if (pendingWeekendAction === 'add_modal') {
-                saveScheduleSlotFromModal(true);
-            } else if (pendingWeekendAction === 'paste_duplicate') {
-                executeDuplicate(pendingDuplicateData);
-            }
-
-            pendingWeekendAction = null;
-        }
-
-
-        window.prepareScheduleDelete = function (id, code, date, shift) {
-            if (!isLoggedIn) {
-                showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
-                return;
-            }
-
-            document.getElementById('deleteScheduleDisplay').textContent = `${code} (${date} - ${shift.split(' ')[1]})`;
-            document.getElementById('deleteScheduleIdConfirm').value = id;
-            toggleScheduleDeleteModal(true);
-        }
 
         window.confirmScheduleDelete = async function () {
             const idToDelete = document.getElementById('deleteScheduleIdConfirm').value;
@@ -2219,19 +1943,34 @@
                     const start = document.getElementById('startDate').value;
                     const end = document.getElementById('endDate').value;
 
-                    // Skip fetchAllScheduleData
-                    // await fetchAllScheduleData();
-                    // renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value); 
-
                     if (start && end) {
                         renderPlanningTable(start, end, true);
                     }
+
+                    fetchAllScheduleData().then(() => {
+                        renderScheduleMasterTable(document.getElementById('scheduleMasterSearchInput').value);
+                    });
 
                 } catch (e) {
                     console.error("Error deleting schedule slot:", e);
                     showMessage("Gagal menghapus slot jadwal. Cek koneksi atau izin RLS.", "error");
                 }
             }
+        }
+
+        window.toggleScheduleDeleteModal = function (show) {
+            document.getElementById('scheduleDeleteModal').classList.toggle('hidden', !show);
+        }
+
+        window.prepareScheduleDelete = function (id, code, date, shift) {
+            if (!isLoggedIn) {
+                showMessage("Akses ditolak. Silakan Login sebagai Admin.", "error");
+                return;
+            }
+
+            document.getElementById('deleteScheduleDisplay').textContent = `${code} (${date} - ${shift.split(' ')[1]})`;
+            document.getElementById('deleteScheduleIdConfirm').value = id;
+            toggleScheduleDeleteModal(true);
         }
 
         window.toggleScheduleDeleteModal = function (show) {
@@ -4134,46 +3873,50 @@
         }
 
         window.onload = async function () {
+            // 1. Inisialisasi UI dasar segera agar tombol & input muncul
+            try {
+                await setupApp();
+            } catch (e) {
+                console.error("Gagal menjalankan setupApp:", e);
+            }
+
             try {
                 if (!window.supabase) {
                     throw new Error("SDK Supabase tidak dimuat. Cek koneksi internet anda.");
                 }
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-                // --- NEW: Check LocalStorage for Persistence ---
                 if (localStorage.getItem('isAdminLoggedIn') === 'true') {
                     isLoggedIn = true;
                     updateAdminUI();
                 }
 
-                // 1. Cek koneksi sederhana dulu sebelum lanjut
-                // Menggunakan fetchWithRetry untuk ketahanan terhadap network glitch
-                await fetchWithRetry(async () => {
+                // 2. Cek koneksi & Ambil Data secara asinkron (Background)
+                fetchWithRetry(async () => {
                     const { error } = await supabase.from(TABLE_NAME).select('id').limit(1);
                     if (error) throw error;
+
+                    // Ambil data awal
+                    await listenForProductionData();
+                    await fetchAllScheduleData();
+
+                }).then(() => {
+                    console.log("Supabase Ready.");
+                }).catch(error => {
+                    console.error("Kesalahan Supabase:", error);
+                    let errorMessage = error.message && error.message.includes("Failed to fetch")
+                        ? "Gagal terhubung ke Supabase (Network/Paused)."
+                        : `Koneksi Bermasalah: ${error.message}`;
+                    showMessage(errorMessage, "error");
                 });
 
-                // 2. Setup App (termasuk fetch data utama) dan tunggu sampai selesai
-                await setupApp();
-
-                // 3. Tampilkan pesan sukses hanya jika semua di atas berhasil
-                showMessage("Koneksi Supabase Berhasil! (Menggunakan data 'production_rates')", "info");
-                showView('estimation');
-
             } catch (error) {
-                console.error("Kesalahan inisialisasi Supabase:", error);
-
-                let errorMessage;
-                if (error.message && error.message.includes("Failed to fetch")) {
-                    errorMessage = "Gagal terhubung ke Supabase. Cek koneksi internet atau apakah Project Supabase sedang 'Paused'.";
-                } else {
-                    errorMessage = `Gagal menginisialisasi Supabase: ${error.message} `;
-                }
-                showMessage(errorMessage, "error");
-
-                // Fallback: Tetap coba tampilkan view meskipun error (agar UI tidak blank)
-                showView('estimation');
+                console.error("Fatal Error during onload:", error);
+                showMessage("Isu Inisialisasi: " + error.message, "error");
             }
+
+            // Tampilkan view awal
+            showView('estimation');
         }
 
         function showMessage(message, type = 'info') {
@@ -4192,10 +3935,9 @@
         }
 
         async function setupApp() {
+            // INI PENTING: Jalankan inisialisasi UI Tanpa Menunggu Database
             setupCapacityListener();
-
-            // Tunggu data produksi dimuat
-            await listenForProductionData();
+            addInputRow(); // Tambahkan baris pertama segera agar UI tidak blank
 
             const prodForm = document.getElementById('productionDataForm');
             if (prodForm) {
@@ -4239,11 +3981,6 @@
             }
 
             updateAutoScheduleButton();
-
-            // Inisialisasi dengan 1 baris input
-            addInputRow();
-
-
         }
 
         async function listenForProductionData() {
@@ -5390,6 +5127,13 @@
         }
 
         // --- NEW: Toggle & Logic for Add Schedule Modal ---
+        window.closePlanningTable = function () {
+            const section = document.getElementById('planningResultSection');
+            const placeholder = document.getElementById('planningTablePlaceholder');
+            if (section) section.classList.add('hidden');
+            if (placeholder) placeholder.classList.remove('hidden');
+        };
+
         window.toggleScheduleAddModal = function (show) {
             const modal = document.getElementById('scheduleAddModal');
             if (modal) modal.classList.toggle('hidden', !show);
@@ -5663,6 +5407,61 @@
                 console.error("Error saving new schedule slot:", e);
                 showMessage(`Gagal menyimpan: ${e.message}`, "error");
             }
+        }
+
+        window.toggleWeekendConfirmModal = function (show, action = null, dateStr = '', details = null) {
+            const modal = document.getElementById('weekendConfirmModal');
+            if (!modal) return;
+            modal.classList.toggle('hidden', !show);
+
+            if (show) {
+                const titleEl = document.getElementById('weekendModalTitle');
+                const textEl = document.getElementById('weekendConfirmText');
+
+                if (action === 'swap') {
+                    const sCode = details ? details.source : 'Item A';
+                    const tCode = details ? details.target : 'Item B';
+                    const swapIcon = `
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>`;
+                    if (titleEl) titleEl.textContent = "Konfirmasi Tukar Posisi";
+                    if (textEl) {
+                        textEl.innerHTML = `
+                                <p class="mb-3">Anda akan menukar posisi jadwal:</p>
+                                <div class="flex items-center justify-center bg-gray-50 border border-gray-200 p-3 rounded-lg mb-3">
+                                    <span class="font-bold text-indigo-700 text-lg">${sCode}</span>
+                                    ${swapIcon}
+                                    <span class="font-bold text-indigo-700 text-lg">${tCode}</span>
+                                </div>
+                                <p>Pastikan kedua mesin kompatibel. Lanjutkan?</p>`;
+                    }
+                } else {
+                    if (titleEl) titleEl.textContent = "Konfirmasi Hari Libur";
+                    if (textEl) {
+                        textEl.innerHTML = `
+                        <p>Tanggal <span class="font-bold text-orange-600 bg-orange-50 px-1 rounded">${dateStr}</span> adalah hari libur (Akhir Pekan).</p>
+                        <p class="mt-2">Apakah Anda yakin ingin menjadwalkan produksi di hari ini?</p>`;
+                    }
+                }
+                if (action) pendingWeekendAction = action;
+            }
+        }
+
+        window.handleWeekendConfirm = function () {
+            toggleWeekendConfirmModal(false);
+            if (pendingWeekendAction === 'update') {
+                updateScheduleSlotFromModal(true);
+            } else if (pendingWeekendAction === 'move') {
+                processDropUpdate(true);
+            } else if (pendingWeekendAction === 'swap') {
+                executeSwap();
+            } else if (pendingWeekendAction === 'add_modal') {
+                saveScheduleSlotFromModal(true);
+            } else if (pendingWeekendAction === 'paste_duplicate') {
+                executeDuplicate(pendingDuplicateData);
+            }
+            pendingWeekendAction = null;
         }
 
     </script>
