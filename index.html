@@ -1594,10 +1594,488 @@
             pcsPerBoxInput.addEventListener('input', () => { });
         }
 
+        // --- RESTORED PLANNING FUNCTIONS ---
+
+        window.autoSetEndDate = function () {
+            const startDateStr = document.getElementById('startDate').value;
+            if (!startDateStr || startDateStr.length < 10) return;
+
+            const startDate = parseDMY(startDateStr);
+            if (!startDate) return;
+
+            // Default: +6 hari (Total 7 hari)
+            const endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+
+            document.getElementById('endDate').value = formatDateToDMY(endDate);
+        }
+
+        window.handlePlanningFormSubmit = async function (event) {
+            event.preventDefault();
+            const startDateStr = document.getElementById('startDate').value;
+            const endDateStr = document.getElementById('endDate').value;
+
+            if (!startDateStr || !endDateStr) {
+                showMessage("Mohon isi tanggal mulai dan tanggal akhir.", "error");
+                return;
+            }
+
+            const start = parseDMY(startDateStr);
+            const end = parseDMY(endDateStr);
+
+            if (end < start) {
+                showMessage("Tanggal akhir tidak boleh lebih kecil dari tanggal mulai.", "error");
+                return;
+            }
+
+            // Limit range to prevent browser crash (e.g. max 31 days)
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays > 31) {
+                showMessage("Rentang tanggal maksimal adalah 31 hari agar performa tetap optimal.", "error");
+                return;
+            }
+
+            showMessage("Memuat data jadwal...", "info");
+
+            await fetchScheduleData(startDateStr, endDateStr);
+            renderPlanningTable(startDateStr, endDateStr);
+        }
+
+        let planningChartInstance = null;
+
+        // Helper Color Class (Simplified)
+        function getColorClass(colorName) {
+            if (!colorName) return 'bg-gray-100 text-gray-800 border-gray-200';
+            const c = colorName.toLowerCase();
+            if (c.includes('hijau') || c.includes('green')) return 'bg-green-100 text-green-900 border-green-200';
+            if (c.includes('merah') || c.includes('red')) return 'bg-red-100 text-red-900 border-red-200';
+            if (c.includes('kuning') || c.includes('yellow')) return 'bg-yellow-100 text-yellow-900 border-yellow-200';
+            if (c.includes('biru') || c.includes('blue')) return 'bg-blue-100 text-blue-900 border-blue-200';
+            if (c.includes('hitam') || c.includes('black')) return 'bg-gray-800 text-white border-gray-600';
+            if (c.includes('putih') || c.includes('white')) return 'bg-white border border-gray-300 text-gray-800 shadow-sm';
+            if (c.includes('ungu') || c.includes('purple')) return 'bg-purple-100 text-purple-900 border-purple-200';
+            if (c.includes('orange')) return 'bg-orange-100 text-orange-900 border-orange-200';
+            if (c.includes('bening') || c.includes('clear')) return 'bg-slate-50 text-slate-700 border border-slate-300 border-dashed';
+            return 'bg-gray-100 text-gray-800 border-gray-200';
+        }
+
+        window.renderPlanningTable = function (startDateStr, endDateStr, preserveData = false) {
+            const container = document.getElementById('planningTableWrapper');
+            const placeholder = document.getElementById('planningTablePlaceholder');
+            const resultSection = document.getElementById('planningResultSection');
+            const tableTitle = document.getElementById('planningTableTitle');
+            const actualTable = document.getElementById('planningActualTable');
+
+            if (!actualTable) return;
+
+            // Hide placeholder, show result
+            if (placeholder) placeholder.classList.add('hidden');
+            if (resultSection) resultSection.classList.remove('hidden');
+
+            if (tableTitle) tableTitle.textContent = `Matriks Jadwal: ${startDateStr} s/d ${endDateStr}`;
+
+            const startDate = parseDMY(startDateStr);
+            const endDate = parseDMY(endDateStr);
+            const dateArray = [];
+            let currentDate = new Date(startDate);
+
+            while (currentDate <= endDate) {
+                dateArray.push(new Date(currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+
+            // --- BUILD HEADER ---
+            let theadHTML = `
+                <thead class="sticky top-0 bg-white z-30 shadow-sm">
+                    <tr>
+                        <th class="py-3 px-2 border-b-2 border-r border-gray-200 bg-gray-100 text-left text-xs font-bold text-gray-700 uppercase w-32 sticky left-0 z-40">Mesin</th>
+                        <th class="py-3 px-1 border-b-2 border-r border-gray-200 bg-gray-100 text-center text-xs font-bold text-gray-700 w-20 sticky left-32 z-40">Shift</th>
+             `;
+
+            dateArray.forEach(date => {
+                const dayName = date.toLocaleDateString('id-ID', { weekday: 'short' }).toUpperCase();
+                const dateNum = date.getDate();
+                const monthNum = date.getMonth() + 1;
+                const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+                const bgClass = isWeekend ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-700';
+
+                theadHTML += `
+                    <th class="py-2 px-1 border-b-2 border-r border-gray-100 min-w-[100px] text-center ${bgClass}">
+                        <div class="text-[10px] uppercase tracking-wider opacity-70">${dayName}</div>
+                        <div class="text-sm font-extrabold">${dateNum}/${monthNum}</div>
+                    </th>
+                 `;
+            });
+
+            theadHTML += `</tr></thead>`;
+
+            // --- BUILD BODY ---
+            let tbodyHTML = `<tbody class="divide-y divide-gray-100">`;
+
+            STATIC_MACHINE_DATA.forEach((machine, index) => {
+                const machineCode = machine.code;
+
+                // 3 Rows per Machine (Shift 1, 2, 3)
+                for (let shift = 1; shift <= 3; shift++) {
+                    const isFirstShift = (shift === 1);
+                    const borderTopClass = isFirstShift ? 'border-t-2 border-gray-200' : '';
+
+                    tbodyHTML += `<tr class="hover:bg-gray-50 transition duration-150 ${borderTopClass}">`;
+
+                    // CELL: MESIN (Rowspan 3)
+                    if (isFirstShift) {
+                        tbodyHTML += `
+                            <td rowspan="3" class="py-2 px-3 border-r border-b-2 border-gray-200 bg-white font-bold text-gray-800 text-sm align-top sticky left-0 z-20 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">
+                                <div class="flex flex-col h-full justify-center">
+                                    <span class="text-base font-extrabold text-indigo-900">${machineCode}</span>
+                                    <span class="text-[10px] text-gray-400 font-mono mt-0.5">${machine.type}</span>
+                                </div>
+                            </td>
+                          `;
+                    }
+
+                    // CELL: SHIFT
+                    let shiftIcon = '';
+                    let shiftClass = '';
+                    if (shift === 1) { shiftIcon = '☀'; shiftClass = 'text-orange-500 bg-orange-50/50'; }
+                    if (shift === 2) { shiftIcon = '☁'; shiftClass = 'text-blue-500 bg-blue-50/50'; }
+                    if (shift === 3) { shiftIcon = '☾'; shiftClass = 'text-indigo-900 bg-indigo-50/50'; }
+
+                    tbodyHTML += `
+                        <td class="py-1 px-1 border-r border-b border-gray-200 text-center text-xs font-bold sticky left-32 z-20 ${shiftClass}">
+                            <div class="flex items-center justify-center gap-1">
+                                <span>${shiftIcon}</span> <span>${shift}</span>
+                            </div>
+                        </td>
+                      `;
+
+                    // CELL: DATA PER DATE
+                    dateArray.forEach(date => {
+                        const dateYMD = formatDateToYMD(date);
+                        const shiftName = `Shift ${shift}`;
+                        const key = `${machineCode}|${dateYMD}|${shiftName}`;
+                        const item = scheduleData[key];
+                        const isWeekend = (date.getDay() === 0 || date.getDay() === 6);
+                        const weekendBg = isWeekend ? 'bg-red-50/30' : '';
+
+                        let cellContent = '';
+                        let cellClass = `border-r border-b border-gray-100 p-1 h-14 w-[100px] relative group cursor-pointer align-top ${weekendBg}`;
+                        let clickAction = '';
+
+                        if (item) {
+                            // ITEM EXISTS
+                            const productCode = item.product_code;
+                            const productName = item.product_name || '';
+
+                            // Get Color
+                            let color = item.color;
+                            if (!color) {
+                                const prod = Object.values(productionData).find(p => p.code === productCode);
+                                color = prod ? prod.color : '';
+                            }
+
+                            const colorClass = getColorClass(color);
+                            const textColorClass = colorClass.includes('text-white') ? 'text-white' : 'text-gray-900';
+
+                            // Check collision with ID for edit
+                            // We construct object explicitly to avoid issues
+                            const itemDataObj = {
+                                id: item.id,
+                                mesin: item.mesin,
+                                schedule_date: item.schedule_date,
+                                schedule_shift: item.schedule_shift,
+                                product_code: item.product_code,
+                                product_name: item.product_name,
+                                order_qty: item.order_qty
+                            };
+                            const safeItem = JSON.stringify(itemDataObj).replace(/"/g, '&quot;');
+
+                            cellContent = `
+                                <div class="w-full h-full rounded shadow-sm flex flex-col justify-center px-1.5 py-1 text-xs ${colorClass} bg-opacity-95 border hover:scale-[1.03] hover:shadow-md transition-all z-10 hover:z-30 leading-tight">
+                                    <span class="font-extrabold truncate ${textColorClass}">${productCode}</span>
+                                    <span class="truncate text-[9px] ${textColorClass} opacity-80 mt-0.5">${shortenComponentName(productName)}</span>
+                                </div>
+                              `;
+
+                            if (isLoggedIn) {
+                                // EDIT
+                                clickAction = `onclick='startScheduleEdit(${safeItem})'`;
+                            }
+
+                        } else {
+                            // EMPTY SLOT
+                            if (isLoggedIn) {
+                                cellClass += ' hover:bg-indigo-50 hover:border-indigo-200 transition-colors duration-200';
+                                clickAction = `onclick="openAddScheduleModal('${machineCode}', '${formatDateToDMY(date)}', '${shiftName}')"`;
+
+                                // Add Button
+                                cellContent = `
+                                    <div class="hidden group-hover:flex w-full h-full items-center justify-center text-indigo-300">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    </div>
+                                  `;
+                            }
+                        }
+
+                        if (isDuplicating && sourceDuplicateItem) {
+                            // Paste Mode
+                            clickAction = `onclick="handleCellClick(event)" data-machine="${machineCode}" data-date="${dateYMD}" data-shift="${shiftName}"`;
+                            cellClass += ' hover:bg-yellow-100 hover:shadow-inner';
+                        }
+
+                        tbodyHTML += `<td class="${cellClass}" ${clickAction}>${cellContent}</td>`;
+                    });
+
+                    tbodyHTML += `</tr>`;
+                }
+            });
+
+            tbodyHTML += `</tbody>`;
+
+            actualTable.innerHTML = theadHTML + tbodyHTML;
+
+            updateMachineActivityChart(startDate, endDate, dateArray);
+        }
+
+        window.updateMachineActivityChart = function (startDate, endDate, dateArray) {
+            const ctx = document.getElementById('machineActivityChart');
+            if (!ctx) return;
+
+            if (typeof Chart === 'undefined') {
+                document.getElementById('chartPlaceholder').classList.add('hidden'); // Hide placeholder anyway
+                return;
+            }
+
+            // Destroy old chart if exists
+            if (planningChartInstance) {
+                planningChartInstance.destroy();
+            }
+
+            // Data Preparation
+            const dailyStats = dateArray.map(date => {
+                const dateYMD = formatDateToYMD(date);
+                let activeCodes = new Set();
+                let uniqueComponents = new Set();
+
+                STATIC_MACHINE_DATA.forEach(m => {
+                    for (let s = 1; s <= 3; s++) {
+                        const key = `${m.code}|${dateYMD}|Shift ${s}`;
+                        const item = scheduleData[key];
+                        if (item) {
+                            activeCodes.add(item.product_code);
+                            uniqueComponents.add(item.product_name);
+                        }
+                    }
+                });
+
+                return {
+                    dateLabel: formatDateToDMY(date).substring(0, 5), // DD/MM
+                    activeCodes: activeCodes.size,
+                    uniqueComponents: uniqueComponents.size,
+                    displayDate: formatDateToDMY(date) // For tooltip
+                };
+            });
+
+            const labels = dailyStats.map(d => d.dateLabel);
+            const dataCodes = dailyStats.map(d => d.activeCodes);
+            const dataComponents = dailyStats.map(d => d.uniqueComponents);
+
+            // Create New Chart
+            planningChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Kode Unik',
+                            data: dataCodes,
+                            borderColor: 'rgb(79, 70, 229)', // Indigo 600
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Item Komponen',
+                            data: dataComponents,
+                            borderColor: 'rgb(16, 185, 129)', // Green 500
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            tension: 0.3,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top', align: 'end' },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { borderDash: [2, 4] } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            document.getElementById('chartPlaceholder').classList.add('hidden');
+        }
+
+        window.exportPlanningMatrixToExcel = function () {
+            if (typeof XLSX === 'undefined') {
+                showMessage("Library Excel belum siap. Silakan refresh.", "error");
+                return;
+            }
+
+            const table = document.getElementById('planningActualTable');
+            if (!table || table.rows.length < 2) {
+                showMessage("Tabel Jadwal masih kosong. Tampilkan jadwal terlebih dahulu.", "error");
+                return;
+            }
+
+            const startDateStr = document.getElementById('startDate').value.replace(/\//g, '-');
+            const endDateStr = document.getElementById('endDate').value.replace(/\//g, '-');
+            const fileName = `Jadwal_Produksi_${startDateStr}_sd_${endDateStr}.xlsx`;
+
+            // Convert HTML table to Sheet
+            const wb = XLSX.utils.table_to_book(table, { sheet: "Jadwal Produksi" });
+            XLSX.writeFile(wb, fileName);
+        }
+
         // --- NEW: MISSING CORE DATA FETCHERS ---
 
+        function parseDMY(dmy) {
+            if (!dmy) return null;
+            const parts = dmy.split('/');
+            if (parts.length !== 3) return null;
+            // Note: Month is 0-indexed in JS Date
+            return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+        }
 
+        function formatDateToDMY(date) {
+            if (!date) return '';
+            let d = date.getDate();
+            let m = date.getMonth() + 1;
+            let y = date.getFullYear();
+            return `${d.toString().padStart(2, '0')}/${m.toString().padStart(2, '0')}/${y}`;
+        }
 
+        function formatDateToYMD(date) {
+            if (!date) return '';
+            let d = date.getDate();
+            let m = date.getMonth() + 1;
+            let y = date.getFullYear();
+            return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+        }
+
+        async function fetchScheduleData(startDateStr, endDateStr) {
+            const startYMD = formatDateToYMD(parseDMY(startDateStr));
+            const endYMD = formatDateToYMD(parseDMY(endDateStr));
+
+            try {
+                const { data, error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .select('*')
+                    .gte('schedule_date', startYMD)
+                    .lte('schedule_date', endYMD);
+
+                if (error) throw error;
+
+                if (data) {
+                    processScheduleData(data); // Populates global scheduleData
+                }
+
+            } catch (e) {
+                console.error("Error fetching schedule data:", e);
+                showMessage("Gagal mengambil data jadwal: " + e.message, "error");
+            }
+        }
+
+        async function fetchAllScheduleData() {
+            try {
+                // Limit to last 2000 records
+                const { data, error } = await supabase
+                    .from(SCHEDULE_TABLE_NAME)
+                    .select('*')
+                    .order('schedule_date', { ascending: false })
+                    .limit(2000);
+
+                if (error) throw error;
+
+                masterScheduleData = data || [];
+                const countElem = document.getElementById('scheduleMasterTotalCount');
+                if (countElem) countElem.textContent = `(${masterScheduleData.length} records)`;
+
+                renderScheduleMasterTable();
+
+            } catch (e) {
+                console.error("Error fetching all schedule data:", e);
+                showMessage("Gagal mengambil data master jadwal: " + e.message, "error");
+            }
+        }
+
+        function renderScheduleMasterTable(searchTerm = '') {
+            const container = document.getElementById('scheduleMasterContainer');
+            if (!container) return;
+
+            let filteredData = masterScheduleData;
+            if (searchTerm) {
+                const lower = searchTerm.toLowerCase();
+                filteredData = masterScheduleData.filter(item =>
+                    (item.product_code && item.product_code.toLowerCase().includes(lower)) ||
+                    (item.product_name && item.product_name.toLowerCase().includes(lower)) ||
+                    (item.mesin && item.mesin.toLowerCase().includes(lower)) ||
+                    (item.schedule_shift && item.schedule_shift.toLowerCase().includes(lower))
+                );
+            }
+
+            if (filteredData.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-4">Tidak ada data jadwal yang ditemukan.</p>';
+                return;
+            }
+
+            let html = `
+            <div class="overflow-x-auto rounded-lg shadow-md border border-gray-200 bg-white max-h-[60vh] overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mesin</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kode</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama Barang</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Qty (Dus)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+            `;
+
+            filteredData.forEach(item => {
+                const dateStr = formatDateToDMY(new Date(item.schedule_date));
+                html += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-900">${dateStr}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 font-bold">${item.mesin}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600">${item.schedule_shift}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 font-mono">${item.product_code}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-600 truncate max-w-[200px]">${item.product_name || '-'}</td>
+                        <td class="px-4 py-2 whitespace-nowrap text-sm text-gray-800 text-right">${item.order_qty || 0}</td>
+                    </tr>
+                 `;
+            });
+
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+        }
 
         function processScheduleData(data) {
             // Global data processing for schedule items
@@ -2956,7 +3434,7 @@
         };
 
         // --- NEW: Chart Rendering Logic ---
-        let planningChartInstance = null;
+
 
         // Updated: renderMachineChart now accepts pre-calculated daily stats
         window.renderMachineChart = function (dailyStats) {
@@ -5130,8 +5608,19 @@
         window.closePlanningTable = function () {
             const section = document.getElementById('planningResultSection');
             const placeholder = document.getElementById('planningTablePlaceholder');
+            const dailySummary = document.getElementById('dailySummaryContainer');
+            const chartPlaceholder = document.getElementById('chartPlaceholder');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
             if (section) section.classList.add('hidden');
             if (placeholder) placeholder.classList.remove('hidden');
+            if (dailySummary) dailySummary.classList.add('hidden');
+            if (chartPlaceholder) chartPlaceholder.classList.remove('hidden');
+
+            // Reset input tanggal
+            if (startDateInput) startDateInput.value = '';
+            if (endDateInput) endDateInput.value = '';
         };
 
         window.toggleScheduleAddModal = function (show) {
